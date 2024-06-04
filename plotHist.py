@@ -1,6 +1,7 @@
 from typing import Any
 import ROOT
 import csv
+import math
 
 class PlotCreator():
 
@@ -9,7 +10,7 @@ class PlotCreator():
 
         self.CANVAS_SIZE_X   = 800
         self.CANVAS_SIZE_Y   = 800
-        self.N_BINS          = 50
+        self.N_BINS          = 250
         self.LEGEND_X        = 0.65
         self.LEGEND_Y        = 0.75
         self.LEGEND_SIZE_X   = 0.1
@@ -18,7 +19,8 @@ class PlotCreator():
         self.FONT            = 43
         self.AXIS_TITLE_SIZE = 20
         self.LABEL_SIZE      = 15
-        self.MARKER_STYLE    = 20
+        self.MARKER_STYLE    = 50
+        self.MARKER_SIZE     = 0.1
         self.COLOR           = {"kpi"  : ROOT.kBlue,
                                 "kpisw": ROOT.kOrange,
                                 "ratio": ROOT.kBlack}
@@ -32,6 +34,7 @@ class PlotCreator():
         self.trueid     = "(B_BKGCAT==0 ||B_BKGCAT== 50)"
         self.Histograms = {}
         self.Trees      = {}
+        self.Sizes      = {}
 
         # imports data from the .root files that contain Monte Carlo data
         # imports data from the Kaon decays and adds them to a TTree object
@@ -46,8 +49,8 @@ class PlotCreator():
         self.Trees["kpisw"] = Tree_kpisw
 
         #Defines the lengths of the TTree objects
-        self.Tree_kpisw_size = self.Trees["kpisw"].GetEntries()
-        self.Tree_kpi_size   = self.Trees["kpi"  ].GetEntries()
+        self.Sizes["kpisw"] = self.Trees["kpisw"].GetEntries()
+        self.Sizes["kpi  "] = self.Trees["kpi"  ].GetEntries()
 
     def getVariableNames(self):
         #Imports the variable names and finds which variables belong to each decay
@@ -70,6 +73,13 @@ class PlotCreator():
         self.kpiswVariables .sort()
         self.AllVariables   .sort()
 
+    def findVariableHeight(self):
+        maxBinCounts_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"].GetMaximumBin())
+        maxBinCounts_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin())
+
+
+        self.max_height = max(maxBinCounts_kpi,maxBinCounts_kpisw)
+        
     def findVariableBound(self, variable):
         #Finds the maximium and minimum values for each variable
         #Creates a list of possible bounds
@@ -84,11 +94,20 @@ class PlotCreator():
 
     def createHist(self, variable, decay = "kpi"):
         self.findVariableBound(variable)
-        hist = ROOT.TH1F(f"h_{variable}_{decay}", f"{variable}_{decay}",  self.N_BINS, self.lowerBound, self.upperBound)
+        hist_name = f"h_{variable}_{decay}"
+
+        hist = ROOT.TH1F(hist_name, f"{variable}_{decay}",  self.N_BINS, self.lowerBound, self.upperBound)
         hist.SetLineColor(self.COLOR[decay])
         hist.SetLineWidth(self.HIST_LINE_WIDTH)
-        self.Trees[decay].Draw(f"{variable}>>h_{variable}_{decay}")
+
+        if decay == "kpisw":
+            self.Trees[decay].Draw(f"{variable}>>{hist_name}", self.sweights)
+        else:
+            self.Trees[decay].Draw(f"{variable}>>{hist_name}")
+
         self.Histograms[decay] = hist
+        self.Sizes[decay]      = self.Histograms[decay].GetEntries()
+
     
     def createSingleImage(self, variable, decay = "kpi"):
         self.canvas = ROOT.TCanvas("c", "canvas", self.CANVAS_SIZE_X, self.CANVAS_SIZE_Y)
@@ -110,12 +129,13 @@ class PlotCreator():
         #Defines and normalises Ratio plot
         h_ratio = self.Histograms["kpisw"].Clone("h_ratio")
         h_ratio.Divide(self.Histograms["kpi"])
-        h_ratio.Scale(self.Tree_kpi_size/self.Tree_kpisw_size )
+        h_ratio.Scale(self.Sizes["kpi"]/self.Sizes["kpisw"])
 
         # Style for Ratio plot
         h_ratio.SetTitle("")
         h_ratio.SetLineColor(self.COLOR["ratio"])
         h_ratio.SetMarkerStyle(self.MARKER_STYLE)
+        h_ratio.SetMarkerSize(self.MARKER_SIZE)
 
         # Style for y axis of Ratio plot
         h_ratioy = h_ratio.GetYaxis()
@@ -175,31 +195,22 @@ class PlotCreator():
 
         #Sets the title and font size
         h_kpiy = self.Histograms["kpi"].GetYaxis()
-        h_kpiy.SetTitle(f"{variable} distribution")
+        h_kpiy.SetTitle(f"{variable} distribution (w/ background)")
         h_kpiy.SetTitleSize(self.AXIS_TITLE_SIZE)
         h_kpiy.SetTitleFont(self.FONT)
         h_kpiy.SetLabelFont(self.FONT)
         h_kpiy.SetLabelSize(self.LABEL_SIZE)
-
-        maxBinCounts_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"].GetMaximumBin())
-        maxBinCounts_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin())
-        BinCounts_kpi      = self.Histograms["kpi"  ].GetEntries()
-        BinCounts_kpisw    = self.Histograms["kpisw"].GetEntries()
-        max_kpi   = maxBinCounts_kpi   / BinCounts_kpi
-        max_kpisw = maxBinCounts_kpisw / BinCounts_kpisw
-        Yaxis_max = float('%.2g' % max(max_kpisw, max_kpi))
         
-        print(Yaxis_max)
-        
-        self.Histograms["kpi"].GetYaxis().SetLimits(0, 1)
-        
+        self.findVariableHeight()
+        h_kpiy.SetRangeUser(0, self.max_height*3)
+ 
         h_kpix = self.Histograms["kpi"].GetXaxis()
         h_kpix.SetLabelFont(self.FONT)
         h_kpix.SetLabelSize(0.0)
 
         #Draws histograms
-        self.Histograms["kpi"  ].DrawNormalized("HISTO", norm=1)
-        self.Histograms["kpisw"].DrawNormalized("HISTO SAME", norm=1)
+        self.Histograms["kpisw"].DrawNormalized("HISTO", norm=1)
+        self.Histograms["kpi"  ].DrawNormalized("HISTO SAME", norm=1)
         
         
         #Defines and Draws the legend
@@ -222,13 +233,14 @@ class PlotCreator():
 
     def computeDifference(self, variable):
         #Returns the P value
-        self.createHist("kpisw",variable)
-        self.createHist("kpi", variable)
+        self.createHist(variable, "kpisw")
+        self.createHist(variable, "kpi"  )
         return self.Histograms["kpi"].Chi2Test(self.Histograms["kpisw"])
     
     def computeAllDifferences(self):
         diffDict = {}
         for var in self.CommonVariables:
+            print(var)
             diff = self.computeDifference(var)
             diffDict[var] = diff
         
@@ -237,7 +249,6 @@ class PlotCreator():
         write.writerows(diffDict)
         file.close()
 
-    
 
 if __name__ == "__main__":
     p = PlotCreator()
