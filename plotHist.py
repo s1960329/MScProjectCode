@@ -12,16 +12,20 @@ class PlotCreator():
         self.CANVAS_SIZE_X   = 800
         self.CANVAS_SIZE_Y   = 800
         self.N_BINS          = 250
-        self.LEGEND_X        = 0.65
-        self.LEGEND_Y        = 0.75
+        self.LEGEND_X        = 0.8
+        self.LEGEND_Y        = 0.92
         self.LEGEND_SIZE_X   = 0.1
-        self.LEGEND_SIZE_Y   = 0.1
+        self.LEGEND_SIZE_Y   = 0.07
         self.HIST_LINE_WIDTH = 2
         self.FONT            = 43
         self.AXIS_TITLE_SIZE = 20
         self.LABEL_SIZE      = 15
         self.MARKER_STYLE    = 50
         self.MARKER_SIZE     = 0.1
+        self.UPPER_BOUND_Y   = 1
+        self.LOWER_BOUND_Y   = 0
+        self.UPPER_BOUND_X   = 1
+        self.LOWER_BOUND_X   = 0
         
         self.COLOR           = {"kpi"  : ROOT.kBlue,
                                 "kpisw": ROOT.kOrange,
@@ -94,6 +98,7 @@ class PlotCreator():
         #Defines variable histogram
         hist_name = f"h_{variable}_{decay}"
         hist = ROOT.TH1F(hist_name, f"{variable}_{decay}",  self.N_BINS, self.lowerBound, self.upperBound)
+        
         hist.SetLineColor(self.COLOR[decay])
         hist.SetLineWidth(self.HIST_LINE_WIDTH)
 
@@ -126,7 +131,7 @@ class PlotCreator():
             self.createSingleImage(variable, decay="kpisw")
         
 
-    def createRatioPlot(self):
+    def createRatioPlot(self, variable):
         #Defines and normalises Ratio plot
         h_ratio = self.Histograms["kpisw"].Clone("h_ratio")
         h_ratio.Divide(self.Histograms["kpi"])
@@ -141,7 +146,11 @@ class PlotCreator():
         h_ratio.SetMarkerStyle(self.MARKER_STYLE)
         h_ratio.SetMarkerSize(self.MARKER_SIZE)
 
-        # Style for y axis of Ratio plot
+        self.UPPER_BOUND_ratio_Y = h_ratio.GetMaximum()
+        self.LOWER_BOUND_ratio_Y = h_ratio.GetMinimum()
+        h_ratio.SetAxisRange(self.LOWER_BOUND_ratio_Y, self.UPPER_BOUND_ratio_Y, "Y")
+
+        # Style for y axis of Ratio plots
         h_ratioy = h_ratio.GetYaxis()
         h_ratioy.SetTitle("Ratio")
         h_ratioy.SetTitleSize(self.AXIS_TITLE_SIZE)
@@ -153,6 +162,13 @@ class PlotCreator():
         h_ratiox = h_ratio.GetXaxis()
         h_ratiox.SetLabelFont(self.FONT)
         h_ratiox.SetLabelSize(self.LABEL_SIZE)
+        self.UPPER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindLastBinAbove())
+        self.LOWER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindFirstBinAbove())
+
+        print(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
+
+        h_ratio.SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
+        
         h_ratio.Draw("SAME")
         
         #Saves histogram 
@@ -197,7 +213,6 @@ class PlotCreator():
         self.createHist(variable, "kpisw")
 
         self.Histograms["kpi"  ].SetTitle(variable)
-        self.Histograms["kpi"  ].SetAxisRange(0, 20000, "X")
 
         #Sets the title and font size
         h_kpiy = self.Histograms["kpi"].GetYaxis()
@@ -206,7 +221,8 @@ class PlotCreator():
         h_kpiy.SetTitleFont(self.FONT)
         h_kpiy.SetLabelFont(self.FONT)
         h_kpiy.SetLabelSize(self.LABEL_SIZE)
-        
+       
+        self.Histograms["kpi"].SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
         h_kpix = self.Histograms["kpi"].GetXaxis()
         h_kpix.SetLabelSize(0.0)
         
@@ -216,6 +232,8 @@ class PlotCreator():
         maxBinContent_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"  ].GetMaximumBin())
         maxBinContent_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin())
         
+        self.Histograms["kpi"].SetAxisRange(0, 1.1*max(maxBinContent_kpi,maxBinContent_kpisw), "Y")
+
         try:
             if maxBinContent_kpi/integral_kpi >= maxBinContent_kpisw/integral_kpisw :
                 self.Histograms["kpi"  ].DrawNormalized("HISTO", norm=1)
@@ -224,23 +242,25 @@ class PlotCreator():
                 self.Histograms["kpisw"].DrawNormalized("HISTO", norm=1)
                 self.Histograms["kpi"  ].DrawNormalized("HISTO SAME", norm=1)
 
-            
+
             #Defines and Draws the legend
             self.createLegend()
             self.legend.Draw("SAME")
 
             #Defines and draws the ratio plot
             self.padRatio.cd(0)
-            self.createRatioPlot()
+            self.createRatioPlot(variable)
             self.Histograms["ratio"].Draw("SAME")
 
             #Draws and saves the full image
             self.canvas.Draw()
+
             self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}.pdf")
             self.canvas.Close()
-
         except:
             pass
+
+
 
     def createAllDoubleImages(self):
         progess = 0
@@ -271,6 +291,8 @@ class PlotCreator():
 if __name__ == "__main__":
     p = PlotCreator()
     # p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
-    p.createDoubleImage("B_BMassFit_Kst_892_0_piminus_PE")
-    # p.createAllDoubleImages()
+    # p.createDoubleImage("B_Cone2_B_pt")
+    # print(p.LOWER_BOUND_X, p.UPPER_BOUND_X)
+    p.createAllDoubleImages()
     # B_BMassFit_Kst_892_0_Kplus_PX
+    # B_Cone2_B_pt
