@@ -31,13 +31,14 @@ class PlotCreator():
                                 "kpisw": ROOT.kOrange,
                                 "ratio": ROOT.kBlack}
         
+        self.sweights   = "(abs(B_M01-895.55)<100)*NB0_Kpigamma_sw"
+        self.trueid     = "(B_BKGCAT==0 ||B_BKGCAT== 50)"
+        
         self.loadTrees()
         self.getVariableNames()
 
     def loadTrees(self):
         # Uses sweights to remove background from sample data
-        self.sweights   = "(abs(B_M01-895.55)<100)*NB0_Kpigamma_sw"
-        self.trueid     = "(B_BKGCAT==0 ||B_BKGCAT== 50)"
         self.Histograms = {}
         self.Trees      = {}
         self.Sizes      = {}
@@ -165,11 +166,10 @@ class PlotCreator():
         self.UPPER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindLastBinAbove())
         self.LOWER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindFirstBinAbove())
 
-        print(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
-
-        h_ratio.SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
+        print("X:", self.LOWER_BOUND_X, self.UPPER_BOUND_X)
         
         h_ratio.Draw("SAME")
+        h_ratiox.SetRangeUser(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
         
         #Saves histogram 
         self.Histograms["ratio"] = h_ratio
@@ -221,27 +221,24 @@ class PlotCreator():
         h_kpiy.SetTitleFont(self.FONT)
         h_kpiy.SetLabelFont(self.FONT)
         h_kpiy.SetLabelSize(self.LABEL_SIZE)
-       
-        self.Histograms["kpi"].SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
+        
         h_kpix = self.Histograms["kpi"].GetXaxis()
         h_kpix.SetLabelSize(0.0)
         
         integral_kpi   = self.Histograms["kpi"  ].Integral()
         integral_kpisw = self.Histograms["kpisw"].Integral()
 
-        maxBinContent_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"  ].GetMaximumBin())
-        maxBinContent_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin())
-        
-        self.Histograms["kpi"].SetAxisRange(0, 1.1*max(maxBinContent_kpi,maxBinContent_kpisw), "Y")
-
         try:
-            if maxBinContent_kpi/integral_kpi >= maxBinContent_kpisw/integral_kpisw :
-                self.Histograms["kpi"  ].DrawNormalized("HISTO", norm=1)
-                self.Histograms["kpisw"].DrawNormalized("HISTO SAME", norm=1)
-            else:
-                self.Histograms["kpisw"].DrawNormalized("HISTO", norm=1)
-                self.Histograms["kpi"  ].DrawNormalized("HISTO SAME", norm=1)
-
+            maxBinContent_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"  ].GetMaximumBin()) / integral_kpi
+            maxBinContent_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin()) / integral_kpisw
+            
+            self.Histograms["kpi"  ].DrawNormalized("HISTO", norm=1)
+            self.Histograms["kpisw"].DrawNormalized("HISTO SAME", norm=1)
+            
+            print(variable)
+            print("Y:", 0, max(maxBinContent_kpi,maxBinContent_kpisw))
+            
+            #self.Histograms["kpisw"].SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
 
             #Defines and Draws the legend
             self.createLegend()
@@ -259,15 +256,12 @@ class PlotCreator():
             self.canvas.Close()
         except:
             pass
-
-
+        
 
     def createAllDoubleImages(self):
-        progess = 0
         for variable in self.CommonVariables:
             self.createDoubleImage(variable)
-            progess += 1
-            print(progess/len(self.CommonVariables))
+
 
     def computeDifference(self, variable):
         #Returns the P value
@@ -278,7 +272,6 @@ class PlotCreator():
     def computeAllDifferences(self):
         diffDict = {}
         for var in self.CommonVariables:
-            print(var)
             diff = self.computeDifference(var)
             diffDict[var] = diff
         
@@ -290,9 +283,9 @@ class PlotCreator():
 
 if __name__ == "__main__":
     p = PlotCreator()
-    # p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
-    # p.createDoubleImage("B_Cone2_B_pt")
+    p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
+    p.createDoubleImage("B_BMassFit_Kst_892_0_piminus_PE")
     # print(p.LOWER_BOUND_X, p.UPPER_BOUND_X)
-    p.createAllDoubleImages()
+    # p.createAllDoubleImages()
     # B_BMassFit_Kst_892_0_Kplus_PX
     # B_Cone2_B_pt
