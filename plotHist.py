@@ -18,7 +18,7 @@ class PlotCreator():
         self.LEGEND_SIZE_Y   = 0.07
         self.HIST_LINE_WIDTH = 2
         self.FONT            = 43
-        self.AXIS_TITLE_SIZE = 20
+        self.AXIS_TITLE_SIZE = 15
         self.LABEL_SIZE      = 15
         self.MARKER_STYLE    = 50
         self.MARKER_SIZE     = 0.1
@@ -28,12 +28,15 @@ class PlotCreator():
         self.LOWER_BOUND_X   = 0
         
         self.COLOR           = {"kpi"  : ROOT.kBlue,
+                                "pipi" : ROOT.kRed,
                                 "kpisw": ROOT.kOrange,
                                 "ratio": ROOT.kBlack}
         
         self.sweights   = "(abs(B_M01-895.55)<100)*NB0_Kpigamma_sw"
         self.trueid     = "(B_BKGCAT==0 ||B_BKGCAT== 50)"
-        
+        self.decays     = ["kpi", "pipi", "kpisw"]
+
+
         self.loadTrees()
         self.getVariableNames()
 
@@ -48,6 +51,10 @@ class PlotCreator():
         Tree_kpi = ROOT.TChain("DecayTree")
         Tree_kpi.Add("../HistogramsLHCbData/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
         Tree_kpi.Add("../HistogramsLHCbData/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
+
+        Tree_pipi = ROOT.TChain("DecayTree")
+        Tree_pipi.Add("../HistogramsLHCbData/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
+        Tree_pipi.Add("../HistogramsLHCbData/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
         
         # imports data from the Sample decays and adds them to a TTree object
         Tree_kpisw = ROOT.TChain("DecayTree")
@@ -56,10 +63,12 @@ class PlotCreator():
         # stores trees
         self.Trees["kpi"  ] = Tree_kpi
         self.Trees["kpisw"] = Tree_kpisw
+        self.Trees["pipi" ] = Tree_pipi
 
         # defines the lengths of the TTree objects
+        self.Sizes["kpi"  ] = self.Trees["kpi"  ].GetEntries()
         self.Sizes["kpisw"] = self.Trees["kpisw"].GetEntries()
-        self.Sizes["kpi  "] = self.Trees["kpi"  ].GetEntries()
+        self.Sizes["pipi" ] = self.Trees["pipi" ].GetEntries()
 
     def getVariableNames(self):
         #Imports the variable names and finds which variables belong to each decay
@@ -70,8 +79,14 @@ class PlotCreator():
         #Imports all the Sample decay variables
         variables_kpisw = list(self.Trees["kpisw"].GetListOfBranches()) 
         variablesNames_kpisw = [ str(var.GetFullName()) for var in variables_kpisw]
+
+        variables_pipi = list(self.Trees["pipi"].GetListOfBranches()) 
+        variablesNames_pipi = [ str(var.GetFullName()) for var in variables_pipi]
         
-        #uses sets to find the intersection and exclusive variables
+        variablesNames_kpi.sort()
+        variablesNames_kpisw.sort()
+        variablesNames_pipi.sort()
+
         self.CommonVariables = list( set(variablesNames_kpisw) & set(variablesNames_kpi) )
         self.kpiVariables    = list( set(variablesNames_kpi) - set(variablesNames_kpisw) )
         self.kpiswVariables  = list( set(variablesNames_kpisw) - set(variablesNames_kpi) )
@@ -86,7 +101,6 @@ class PlotCreator():
     def findVariableBounds(self, variable):
         #Finds the maximium and minimum values for each variable
         #Creates a list of possible bounds
-       
         #Save the top and bottom entries of the sorted list
         self.lowerBound = float('%.1g' % max(self.Trees["kpisw"].GetMinimum(variable), self.Trees["kpisw"].GetMinimum(variable), self.Trees["kpi"  ].GetMinimum(variable), self.Trees["kpi"  ].GetMinimum(variable)) )
         self.upperBound = float('%.1g' % min(self.Trees["kpi"  ].GetMaximum(variable), self.Trees["kpi"  ].GetMaximum(variable), self.Trees["kpisw"].GetMaximum(variable), self.Trees["kpisw"].GetMaximum(variable) ) )
@@ -100,12 +114,25 @@ class PlotCreator():
         hist_name = f"h_{variable}_{decay}"
         hist = ROOT.TH1F(hist_name, f"{variable}_{decay}",  self.N_BINS, self.lowerBound, self.upperBound)
         
+        hist.SetMarkerStyle(self.MARKER_STYLE)
+        hist.SetMarkerSize(self.MARKER_SIZE)
+
         hist.SetLineColor(self.COLOR[decay])
         hist.SetLineWidth(self.HIST_LINE_WIDTH)
+
+        hist.GetXaxis().SetLabelFont(self.FONT)
+        hist.GetXaxis().SetLabelSize(self.LABEL_SIZE)
+        hist.GetYaxis().SetLabelFont(self.FONT)
+        hist.GetYaxis().SetLabelSize(self.LABEL_SIZE)
+
+
+        
 
         #Draw with sWeights if the sample data is used
         if decay == "kpisw": self.Trees[decay].Draw(f"{variable}>>{hist_name}", self.sweights)
         else:                self.Trees[decay].Draw(f"{variable}>>{hist_name}")
+
+        #hist.Scale( hist.Integral() )
 
         #Saves updated sizes once sweights are applied
         self.Sizes[decay]      = hist.GetEntries()
@@ -113,11 +140,16 @@ class PlotCreator():
     
     def createSingleImage(self, variable, decay = "kpi"):
         #Defines single histogram canvas
-        self.canvas = ROOT.TCanvas(f"c_{variable}_{decay}", f"canvas_{variable}_{decay}", self.CANVAS_SIZE_X, self.CANVAS_SIZE_Y)
+        self.canvas = ROOT.TCanvas(f"c_{variable}_{decay}", f"{variable}_{decay}", self.CANVAS_SIZE_X, self.CANVAS_SIZE_Y)
         
         #Defines the histogram
-        self.createHist(decay, variable)
+        self.createHist(variable, decay)
+        self.Histograms[decay].GetYaxis().SetRangeUser(0, 1.1*self.Histograms[decay].GetBinContent(self.Histograms[decay].GetMaximumBin()))
         self.Histograms[decay].DrawNormalized("HISTO", norm=1)
+        
+        h_ratiox = self.Histograms[decay].GetXaxis()
+        h_ratiox.SetLabelFont(self.FONT)
+        h_ratiox.SetLabelSize(self.LABEL_SIZE)
         
         #Draws and saves the full image
         self.canvas.SetGridx()
@@ -149,8 +181,7 @@ class PlotCreator():
 
         self.UPPER_BOUND_ratio_Y = h_ratio.GetMaximum()
         self.LOWER_BOUND_ratio_Y = h_ratio.GetMinimum()
-        h_ratio.SetAxisRange(self.LOWER_BOUND_ratio_Y, self.UPPER_BOUND_ratio_Y, "Y")
-
+        
         # Style for y axis of Ratio plots
         h_ratioy = h_ratio.GetYaxis()
         h_ratioy.SetTitle("Ratio")
@@ -158,18 +189,19 @@ class PlotCreator():
         h_ratioy.SetTitleFont(self.FONT)
         h_ratioy.SetLabelFont(self.FONT)
         h_ratioy.SetLabelSize(self.LABEL_SIZE)
+        h_ratioy.SetRangeUser(self.LOWER_BOUND_ratio_Y, self.UPPER_BOUND_ratio_Y)
 
         # Style for x axis of Ratio plot
         h_ratiox = h_ratio.GetXaxis()
         h_ratiox.SetLabelFont(self.FONT)
         h_ratiox.SetLabelSize(self.LABEL_SIZE)
+
         self.UPPER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindLastBinAbove())
         self.LOWER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindFirstBinAbove())
 
-        print("X:", self.LOWER_BOUND_X, self.UPPER_BOUND_X)
         
-        h_ratio.Draw("SAME")
-        h_ratiox.SetRangeUser(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
+        h_ratio.Draw("EP SAME")
+        #h_ratiox.SetRangeUser(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
         
         #Saves histogram 
         self.Histograms["ratio"] = h_ratio
@@ -179,14 +211,15 @@ class PlotCreator():
         legend.AddEntry(self.Histograms["kpi"  ], "B^{0}#rightarrow K^{*0}#gamma - MC")
         legend.AddEntry(self.Histograms["kpisw"], "B^{0}#rightarrow K^{*0}#gamma - Sample")
         legend.SetBorderSize(0)
-        legend.SetTextSize(0.032)
-    
+        legend.SetTextSize(0.024)
+
         self.legend = legend
 
-    def createDoubleCanvas(self):
-        canvas = ROOT.TCanvas("c", "canvas", self.CANVAS_SIZE_X, self.CANVAS_SIZE_Y)
+    def createDoubleCanvas(self, variable):
+        canvas = ROOT.TCanvas(f"c_{variable}", f"canvas_{variable}", self.CANVAS_SIZE_X, self.CANVAS_SIZE_Y)
 
         padHist = ROOT.TPad("padHist", "padHist", 0, 0.3, 1, 1.0)
+        padHist.SetTopMargin(0.10)
         padHist.SetBottomMargin(0.05)
         padHist.SetGridx()
         padHist.Draw()
@@ -203,59 +236,45 @@ class PlotCreator():
         self.padRatio = padRatio
 
     def createDoubleImage(self, variable):
-        #Defines canvas
         ROOT.gStyle.SetOptStat(0)
-        self.createDoubleCanvas()
+        self.createDoubleCanvas(variable)
 
-        #Defines and Draws both histograms
-        self.padHist.cd(0)
-        self.createHist(variable, "kpi")
+        self.padHist.cd()
         self.createHist(variable, "kpisw")
+        self.createHist(variable, "kpi")
 
-        self.Histograms["kpi"  ].SetTitle(variable)
-
-        #Sets the title and font size
-        h_kpiy = self.Histograms["kpi"].GetYaxis()
-        h_kpiy.SetTitle(f"{variable} distribution")
-        h_kpiy.SetTitleSize(self.AXIS_TITLE_SIZE)
-        h_kpiy.SetTitleFont(self.FONT)
-        h_kpiy.SetLabelFont(self.FONT)
-        h_kpiy.SetLabelSize(self.LABEL_SIZE)
+        yb_kpisw = self.Histograms['kpisw'].GetBinContent(self.Histograms['kpisw'].GetMaximumBin())
+        yb_kpi   = self.Histograms['kpi'  ].GetBinContent(self.Histograms['kpi'  ].GetMaximumBin())
         
-        h_kpix = self.Histograms["kpi"].GetXaxis()
-        h_kpix.SetLabelSize(0.0)
+        print(yb_kpi/self.Histograms["kpi"].Integral(), yb_kpisw/self.Histograms["kpisw"].Integral())
+        m = max(yb_kpi/self.Histograms["kpi"].Integral(), yb_kpisw/self.Histograms["kpisw"].Integral())
+        print(m)
+
+        self.Histograms["kpi"  ].Scale(1/self.Histograms["kpi"  ].Integral())
+        self.Histograms["kpisw"].Scale(1/self.Histograms["kpisw"].Integral())
+
+
+        self.Histograms["kpi"].GetYaxis().SetRangeUser(0, m*1.1)
         
-        integral_kpi   = self.Histograms["kpi"  ].Integral()
-        integral_kpisw = self.Histograms["kpisw"].Integral()
 
-        try:
-            maxBinContent_kpi   = self.Histograms["kpi"  ].GetBinContent(self.Histograms["kpi"  ].GetMaximumBin()) / integral_kpi
-            maxBinContent_kpisw = self.Histograms["kpisw"].GetBinContent(self.Histograms["kpisw"].GetMaximumBin()) / integral_kpisw
-            
-            self.Histograms["kpi"  ].DrawNormalized("HISTO", norm=1)
-            self.Histograms["kpisw"].DrawNormalized("HISTO SAME", norm=1)
-            
-            print(variable)
-            print("Y:", 0, max(maxBinContent_kpi,maxBinContent_kpisw))
-            
-            #self.Histograms["kpisw"].SetAxisRange(self.LOWER_BOUND_X, self.UPPER_BOUND_X, "X")
+        self.Histograms["kpi"  ].Draw("HISTO")
+        self.Histograms["kpisw"].Draw("HISTO SAME")
+        
 
-            #Defines and Draws the legend
-            self.createLegend()
-            self.legend.Draw("SAME")
+        
 
-            #Defines and draws the ratio plot
-            self.padRatio.cd(0)
-            self.createRatioPlot(variable)
-            self.Histograms["ratio"].Draw("SAME")
+        self.createLegend()
+        self.legend.Draw("SAME")
 
-            #Draws and saves the full image
-            self.canvas.Draw()
+        self.padRatio.cd()
+        self.createRatioPlot(variable)
+        self.Histograms["ratio"].Draw()
 
-            self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}.pdf")
-            self.canvas.Close()
-        except:
-            pass
+        #Draws and saves the full image
+        self.canvas.Draw()
+        self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}.pdf")
+        self.canvas.Close()
+
         
 
     def createAllDoubleImages(self):
@@ -283,9 +302,15 @@ class PlotCreator():
 
 if __name__ == "__main__":
     p = PlotCreator()
-    p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
+    #p.createSingleImage("gamma_PT", "kpi")
+    p.createDoubleImage("gamma_PT")
+    p.createDoubleImage("B_M")
     p.createDoubleImage("B_BMassFit_Kst_892_0_piminus_PE")
-    # print(p.LOWER_BOUND_X, p.UPPER_BOUND_X)
-    # p.createAllDoubleImages()
-    # B_BMassFit_Kst_892_0_Kplus_PX
-    # B_Cone2_B_pt
+    p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
+    #print(p.LOWER_BOUND_X, p.UPPER_BOUND_X)
+    #p.createAllDoubleImages()
+
+    #B_BMassFit_Kst_892_0_Kplus_PX
+    #B_Cone2_B_pt
+    #gamma_PT
+    #B_M
