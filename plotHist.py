@@ -3,6 +3,9 @@ import ROOT
 import csv
 import math
 import uproot
+import pandas
+import matplotlib
+import hep_ml
 
 class PlotCreator():
 
@@ -51,16 +54,16 @@ class PlotCreator():
         # imports data from the .root files that contain Monte Carlo data
         # imports data from the Kaon decays and adds them to a TTree object
         Tree_kpi = ROOT.TChain("DecayTree")
-        Tree_kpi.Add("../HistogramsLHCbData/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
-        Tree_kpi.Add("../HistogramsLHCbData/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
+        Tree_kpi.Add("../data/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
+        Tree_kpi.Add("../data/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
 
         Tree_pipi = ROOT.TChain("DecayTree")
-        Tree_pipi.Add("../HistogramsLHCbData/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
-        Tree_pipi.Add("../HistogramsLHCbData/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
+        Tree_pipi.Add("../data/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magdown.root")
+        Tree_pipi.Add("../data/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel-magup.root")
         
         # imports data from the Sample decays and adds them to a TTree object
         Tree_kpisw = ROOT.TChain("DecayTree")
-        Tree_kpisw.Add("../HistogramsLHCbData/Sample_Kpigamma_2018_selectedTree_with_sWeights_Analysis_2hg_Unbinned-Mask1.root")
+        Tree_kpisw.Add("../data/Sample_Kpigamma_2018_selectedTree_with_sWeights_Analysis_2hg_Unbinned-Mask1.root")
         
         # stores trees
         self.Trees["kpi"  ] = Tree_kpi
@@ -146,7 +149,7 @@ class PlotCreator():
         #Draws and saves the full image
         self.canvas.SetGridx()
         self.canvas.Draw()
-        self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}_{decay}_single.pdf")
+        self.canvas.Print(f"../imgs/plot_{variable}_{decay}_single.pdf")
         self.canvas.Close()
 
     def createAllSingleImages(self):
@@ -282,7 +285,7 @@ class PlotCreator():
 
             #Draws and saves the full image
             self.canvas.Draw()
-            self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}.pdf")
+            self.canvas.Print(f"../imgs/plot_{variable}.pdf")
             self.canvas.Close()
 
     def createAllDoubleImages(self):
@@ -301,7 +304,7 @@ class PlotCreator():
             diff = self.computeDifference(var)
             diffDict[var] = diff
         
-        file = open("../HistogramsLHCbData/Chi2Values.csv", "wb")
+        file = open("../data/Chi2Values.csv", "wb")
         write = csv.DictWriter(file, diffDict.keys())
         write.writerows(diffDict)
         file.close()
