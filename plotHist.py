@@ -2,12 +2,14 @@ from typing import Any
 import ROOT
 import csv
 import math
+import uproot
 
 class PlotCreator():
 
     def __init__(self) -> None:
 
         ROOT.gROOT.SetBatch(True)
+        ROOT.gStyle.SetGridColor(17)
 
         self.CANVAS_SIZE_X   = 1000
         self.CANVAS_SIZE_Y   = 800
@@ -113,24 +115,13 @@ class PlotCreator():
         #Defines variable histogram
         hist_name = f"h_{variable}_{decay}"
         hist = ROOT.TH1F(hist_name, "",  self.N_BINS, self.LOWER_BOUND_X, self.UPPER_BOUND_X)
-        
-        hist.SetTitleOffset(offset=0, axis="Y")
 
         hist.SetMarkerStyle(self.MARKER_STYLE)
         hist.SetMarkerSize(self.MARKER_SIZE)
 
         hist.SetLineColor(self.COLOR[decay])
         hist.SetLineWidth(self.HIST_LINE_WIDTH)
-
-        hist.GetXaxis().SetLabelFont(self.FONT)
-        hist.GetXaxis().SetLabelSize(0.0)
-        hist.GetYaxis().SetTitle(variable)
-        hist.GetYaxis().SetLabelFont(self.FONT)
-        hist.GetYaxis().SetLabelSize(self.LABEL_SIZE)
-
-        hist.GetYaxis().SetTitleOffset(1.4)
-        
-
+       
         #Draw with sWeights if the sample data is used
         if decay == "kpisw": self.Trees[decay].Draw(f"{variable}>>{hist_name}", self.sweights)
         else:                self.Trees[decay].Draw(f"{variable}>>{hist_name}")
@@ -148,9 +139,9 @@ class PlotCreator():
         self.Histograms[decay].GetYaxis().SetRangeUser(0, 1.1*self.Histograms[decay].GetBinContent(self.Histograms[decay].GetMaximumBin()))
         self.Histograms[decay].DrawNormalized("HISTO", norm=1)
         
-        h_ratiox = self.Histograms[decay].GetXaxis()
-        h_ratiox.SetLabelFont(self.FONT)
-        h_ratiox.SetLabelSize(self.LABEL_SIZE)
+        h_singlex = self.Histograms[decay].GetXaxis()
+        h_singlex.SetLabelFont(self.FONT)
+        h_singlex.SetLabelSize(self.LABEL_SIZE)
         
         #Draws and saves the full image
         self.canvas.SetGridx()
@@ -176,35 +167,35 @@ class PlotCreator():
 
         # Style for Ratio plot
         h_ratio.SetTitle("")
-        h_ratio.SetYTitle("Ratio")
+
         h_ratio.SetLineColor(17)
         h_ratio.SetMarkerStyle(self.MARKER_STYLE)
         h_ratio.SetMarkerStyle(self.MARKER_STYLE)
         h_ratio.SetFillColorAlpha(ROOT.kBlack,0.5)
         
-        
-
         self.UPPER_BOUND_ratio_Y = h_ratio.GetMaximum()
         self.LOWER_BOUND_ratio_Y = h_ratio.GetMinimum()
         
         # Style for y axis of Ratio plots
         h_ratioy = h_ratio.GetYaxis()
-        h_ratioy.SetTitleOffset(2.5)
+        h_ratioy.SetRangeUser(self.LOWER_BOUND_ratio_Y, self.UPPER_BOUND_ratio_Y)
+        h_ratioy.SetTitle("Ratio")
+        h_ratioy.SetTitleOffset(2.0)
         h_ratioy.SetTitleSize(self.AXIS_TITLE_SIZE)
         h_ratioy.SetTitleFont(self.FONT)
         h_ratioy.SetLabelFont(self.FONT)
         h_ratioy.SetLabelSize(self.LABEL_SIZE)
-        h_ratioy.SetRangeUser(self.LOWER_BOUND_ratio_Y, self.UPPER_BOUND_ratio_Y)
+        h_ratioy.CenterTitle()
 
         # Style for x axis of Ratio plot
         h_ratiox = h_ratio.GetXaxis()
+        h_ratiox.SetTitle(variable)
+        h_ratiox.SetTitleOffset(1.2)
+        h_ratiox.SetTitleSize(0.095)
         h_ratiox.SetLabelFont(self.FONT)
         h_ratiox.SetLabelSize(self.LABEL_SIZE)
+        h_ratiox.CenterTitle()
         
-        self.UPPER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindLastBinAbove())
-        self.LOWER_BOUND_X = h_ratiox.GetBinCenter(h_ratio.FindFirstBinAbove())
-        h_ratiox.SetRangeUser(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
-
         h_ratio.Draw("E4")
         
         
@@ -226,14 +217,15 @@ class PlotCreator():
         padHist = ROOT.TPad("padHist", "padHist", 0, 0.3, 1, 1.0)
         padHist.SetGridx()
         padHist.SetTopMargin(0.12)
-        padHist.SetBottomMargin(0.05)
+        padHist.SetBottomMargin(0.025)
         padHist.Draw()
 
         canvas.cd()
         padRatio = ROOT.TPad("padRatio", "padRatio", 0, 0.01, 1, 0.3)
+
         padRatio.SetGridx()
-        padRatio.SetTopMargin(0.05)
-        padRatio.SetBottomMargin(0.2)
+        padRatio.SetTopMargin(0.025)
+        padRatio.SetBottomMargin(0.28)
         padRatio.Draw()
 
         self.canvas   = canvas
@@ -242,23 +234,26 @@ class PlotCreator():
 
     def createDoubleImage(self, variable):
         ROOT.gStyle.SetOptStat(0)
+        ROOT.gStyle.SetTitleAlign(33)
+        ROOT.gStyle.SetTitleX(.63)
+        ROOT.gStyle.SetTitleY(.97)
 
-        self.createDoubleCanvas(variable)
-
-        self.padHist.cd()
+        
         self.createHist(variable, "kpisw")
         self.createHist(variable, "kpi")
-        
+        self.createDoubleCanvas(variable)
+        self.padHist.cd()
 
         self.kpi_integral   = not (self.Histograms["kpisw"].Integral() == 0)
         self.kpisw_integral = not (self.Histograms["kpi"  ].Integral() == 0)
-
         
-
         if self.kpi_integral and self.kpi_integral:
 
             self.Histograms["kpi"  ].Scale(1/self.Histograms["kpi"  ].Integral())
             self.Histograms["kpisw"].Scale(1/self.Histograms["kpisw"].Integral())
+
+            self.Histograms["kpi"].GetXaxis().SetTitle("Variable")
+            self.Histograms["kpi"].SetTitle("Ratio Distribution")
 
             yb_kpisw = self.Histograms['kpisw'].GetBinContent(self.Histograms['kpisw'].GetMaximumBin())
             yb_kpi   = self.Histograms['kpi'  ].GetBinContent(self.Histograms['kpi'  ].GetMaximumBin())
@@ -267,16 +262,9 @@ class PlotCreator():
             self.UPPER_BOUND_hist_Y = float('%.*g' % (2, max(yb_kpi, yb_kpisw)*1.2))
 
             self.Histograms["kpi"].GetYaxis().SetRangeUser(self.LOWER_BOUND_hist_Y, self.UPPER_BOUND_hist_Y)
-
+            self.Histograms["kpi"].GetXaxis().SetLabelSize(0.0)
             self.Histograms["kpi"  ].Draw("HISTO")
             self.Histograms["kpisw"].Draw("HISTO SAME")
-
-            # self.Histograms["kpi"].GetYaxis().SetLabelSize(0.0)
-            # axis_hist_Y = ROOT.TGaxis(self.LOWER_BOUND_X, self.LOWER_BOUND_hist_Y, self.LOWER_BOUND_X, self.UPPER_BOUND_hist_Y, self.LOWER_BOUND_hist_Y, self.UPPER_BOUND_hist_Y, 500, "")
-            # axis_hist_Y.SetLabelFont(self.FONT)
-            # axis_hist_Y.SetLabelFont(self.LABEL_SIZE)
-            # axis_hist_Y.Draw()
- 
 
             self.createLegend()
             self.legend.Draw("SAME")
@@ -288,8 +276,8 @@ class PlotCreator():
             self.Histograms["kpisw"].GetXaxis().SetRangeUser(self.LOWER_BOUND_X, self.UPPER_BOUND_X)
             self.Histograms["kpi"  ].Smooth()
             self.Histograms["kpisw"].Smooth()
-            self.Histograms["ratio"].Smooth()
 
+            self.Histograms["ratio"].Smooth()
             self.Histograms["ratio"].Draw("E4")
 
             #Draws and saves the full image
@@ -297,12 +285,9 @@ class PlotCreator():
             self.canvas.Print(f"../HistogramsLHCbImgs/plot_{variable}.pdf")
             self.canvas.Close()
 
-        
-
     def createAllDoubleImages(self):
         for variable in self.CommonVariables:
             self.createDoubleImage(variable)
-
 
     def computeDifference(self, variable):
         #Returns the P value
@@ -324,12 +309,16 @@ class PlotCreator():
 
 if __name__ == "__main__":
     p = PlotCreator()
+
+    # p.createSingleImage("gamma_PT")
+
     p.createDoubleImage("gamma_PT")
     p.createDoubleImage("piminus_PT")
     p.createDoubleImage("B_BMassConst_TAU")
     p.createDoubleImage("B_BMassFit_Kst_892_0_piminus_PE")
     p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
     p.createDoubleImage("B_BMassFit_prob")
+    p.createDoubleImage("B_Cone2_B_pt")
     
     #p.createAllDoubleImages()
 
