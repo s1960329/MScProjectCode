@@ -1,11 +1,10 @@
-from typing import Any
-import ROOT
+from typing import Any 
 import csv
 import math
 import uproot
-import pandas
-import matplotlib
-import hep_ml
+#import hep_ml
+
+import ROOT
 
 class PlotCreator():
 
@@ -314,14 +313,24 @@ if __name__ == "__main__":
     p = PlotCreator()
 
     # p.createSingleImage("gamma_PT")
-
+    # * log(B_MINIPCHI2)
+    # * log(B_FD_OWNPV)
+    # * B_Cone3_B_ptasy
+    # * gamma_PT
+    # * log(piminus_IP_OWNPV)
+    # * piminus_PT
     p.createDoubleImage("gamma_PT")
     p.createDoubleImage("piminus_PT")
-    p.createDoubleImage("B_BMassConst_TAU")
-    p.createDoubleImage("B_BMassFit_Kst_892_0_piminus_PE")
-    p.createDoubleImage("B_BMassFit_Kst_892_0_Kplus_PX")
-    p.createDoubleImage("B_BMassFit_prob")
-    p.createDoubleImage("B_Cone2_B_pt")
+    p.createDoubleImage("piminus_IP_OWNPV")
+    p.createDoubleImage("B_Cone3_B_ptasy")
+    p.createDoubleImage("B_FD_OWNPV")
+    p.createDoubleImage("B_MINIPCHI2")
+
+    p.createDoubleImage("Kplus_IP_OWNPV")
+    p.createDoubleImage("Kplus_PT")
+    p.createDoubleImage("Kst_892_0_PT")
+    p.createDoubleImage("Kst_892_0_IP_OWNPV")
+
     
     #p.createAllDoubleImages()
 
