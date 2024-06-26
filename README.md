@@ -61,3 +61,35 @@ all suggested variables which has aided in seperating these reactions. Next, I p
 20/06/2024
 Development has been going smoothly, after drawing histograms with the inital sample code the uproot module was installed which allowed for use of matplotlib and pandas. Once histograms with these where created a Gradient boosted reweighter was implemented which allowed the Monte carlo data to look similar to the Sample Data. The Gradient Boosted De sion trees will not be tuned as to find the optimal value for the 
 
+24/06/2024
+TODO: 
+Improve GBDT model and continue to tune variables x
+Deduce why reweighting does not work with some variables ~
+Take the logarithms of some variables x
+Fix ratio plots and limits x
+Implement units (MeV/c)
+Create one big image with a pdf file x
+two or three slides summariing what I've done
+Implement ROC curve 
+Plot with new variables that Lais sending
+Update with Lais on the variables that are not good 
+Adapt code for pipi gamma, Look out for Lais's code
+
+25/06/2024
+Find a better way of scoring the reweighting x
+Why does gamma_PT
+Update with Lais on the variables that are not good 
+Adapt code for pipi gamma, Look out for Lais's code
+
+change from KS to chi2 x
+Implement ROC curve x
+adapt for pipi gamma
+Neural Networks root, tensorflow, skilearn
+
+When taking the logs of variables how should we handle when the value equals zero
+
+
+
+
+
+
