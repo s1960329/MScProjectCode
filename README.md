@@ -82,14 +82,22 @@ Update with Lais on the variables that are not good
 Adapt code for pipi gamma, Look out for Lais's code
 
 change from KS to chi2 x
-Implement ROC curve x
+Implement ROC curve 
 adapt for pipi gamma
 Neural Networks root, tensorflow, skilearn
 
 When taking the logs of variables how should we handle when the value equals zero
 
 
+history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test), verbose=2,batch_size=600, epochs=100)
 
 
+Questions
+
+How to deal with numbers that are zero when taking the natural logarithm 
+How accurate do the Boosest Decision Trees need to be in order to allow for classification
+Is the a way to save a load machine learning models
 
 
+02/07/2024
+This week invovled creating and expereimenting with classifiers, most notably a neural network classifier, but also expereimtning with ADABoost, Stochastic Gradient Decent, and Random Forrests. With the Neural Network I first normalised the data so that the highest value would equal one and the lowest value would equal zero. I then trained the network to distingish between Monte Carlo data and Sample data which it was able to do after training to an accuracy of 70%. However, when thesample model was create but trained on the Gradient boosted decision trees calculated weights it was not possible to train the network much futher than an accuray of 50% Thus confirming that as far as the classifier is concerned the reweighted Monte carlo data is close to indistingaisble to the real sample data. This can be further seen in the ROC curve where the model with weights gives a far less accraute resukt. 
