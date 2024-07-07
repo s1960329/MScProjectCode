@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "MyTMVAClassification_nfold.C": "cpp",
+        "MyBDTApplication.C": "cpp"
+    }
+}
