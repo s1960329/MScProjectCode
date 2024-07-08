@@ -37,10 +37,10 @@ class GBReweight():
         print("Histogram reweighter has been trained...")
 
     def computeWeights(self):
-        fittedWeights = self.reweighter.predict_weights(self.monteCarloData[self.trainingVariables])
-        Norm = len(fittedWeights)/sum(fittedWeights)
-        self.fittedWeightsNormalised   = np.array([Norm*el for el in fittedWeights])
-        self.monteCarloData["weights"] = self.fittedWeightsNormalised
+        fittedWeights            = self.reweighter.predict_weights(self.monteCarloData[self.trainingVariables])
+        Norm                     = len(fittedWeights)/sum(fittedWeights)
+        self.fittedWeightsNorm   = np.array([Norm*el for el in fittedWeights])
+        self.monteCarloData["weights"] = self.fittedWeightsNorm
         print("Normalised Weights have been saved...")
 
     def saveMonteCarloDataToCSV(self):
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     print()
 
     print("- kpi sample data")
-    rootToCSV()
+    rootToCSV(decayMode = "sm", variables = fullVariables["kpi"] + ["NB0_Kpigamma_sw"])
     print()
 
     print("- kpi monte carlo data")
@@ -71,6 +71,4 @@ if __name__ == "__main__":
     pipi.executeAll()
     print("pipi data has been reweighted")
     print()
-
-
-
+    print("\n- All Completed -")
