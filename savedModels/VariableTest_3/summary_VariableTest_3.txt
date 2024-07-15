@@ -1,0 +1,46 @@
+RandomForestClassifier(max_depth=3, n_estimators=50)
+Confusion Matrix
+[[1519  735]
+ [ 180 2113]]
+Test Data Score     : 0.7977066307666054
+Training Data Score : 0.852591645665431
+
+GradientBoostingClassifier(learning_rate=0.012, n_estimators=800)
+Confusion Matrix
+[[1715  539]
+ [ 149 2144]]
+Test Data Score     : 0.8479445950814388
+Training Data Score : 0.8963750720349553
+
+AdaBoostClassifier(learning_rate=0.1, n_estimators=500)
+Confusion Matrix
+[[1720  534]
+ [ 176 2117]]
+Test Data Score     : 0.843166250743457
+Training Data Score : 0.88256957286497
+
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense (Dense)                        │ (None, 13)                  │             182 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_1 (Dense)                      │ (None, 130)                 │           1,820 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_2 (Dense)                      │ (None, 13)                  │           1,703 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_3 (Dense)                      │ (None, 1)                   │              14 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 3,719 (14.53 KB)
+ Trainable params: 3,719 (14.53 KB)
+ Non-trainable params: 0 (0.00 B)
+
+Confusion Matrix 
+[[1866  388]
+ [ 223 2070]]
+Test Data Score     : 0.9403055710234187
+Training Data Score : 0.942995159681068
+
+
+isEvenSplit = True
+trainingVariables = ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']

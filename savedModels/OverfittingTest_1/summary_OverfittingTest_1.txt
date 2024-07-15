@@ -1,0 +1,40 @@
+RandomForestClassifier()
+Confusion Matrix
+[[1954  355]
+ [ 295 1943]]
+Test Data Score     : 0.857219834884748
+Training Data Score : 0.999927060539752
+
+GradientBoostingClassifier()
+Confusion Matrix
+[[1996  313]
+ [ 337 1901]]
+Test Data Score     : 0.8569313031224517
+Training Data Score : 0.8651455821738712
+
+AdaBoostClassifier()
+Confusion Matrix
+[[2021  288]
+ [ 395 1843]]
+Test Data Score     : 0.8493869038703507
+Training Data Score : 0.8456035697328765
+
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense (Dense)                        │ (None, 1)                   │              10 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 10 (40.00 B)
+ Trainable params: 10 (40.00 B)
+ Non-trainable params: 0 (0.00 B)
+
+Confusion Matrix 
+[[1993  316]
+ [ 628 1610]]
+Test Data Score     : 0.8713003203457272
+Training Data Score : 0.8656320531081845
+
+
+isEvenSplit = True
+trainingVariables = ['nTracks', 'B_P', 'gamma_PT', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV', 'B_Cone3_B_ptasy', 'B_ETA']

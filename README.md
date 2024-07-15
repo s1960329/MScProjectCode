@@ -113,3 +113,7 @@ These next few days have been incredibly frustrating, The  end of the week has t
  - How many samples per an epoch?
  - Random Forrest is the best?
  - should I have a 50/50 split of isMonteCarlo Data?  
+
+13/07/2024
+This week I tested various parametres for the classification models and wrote up a large amount of the project into the final .py classification files. I first experimented with overfitting tests and found the largest possible values that gave the most accurate result while also preventing overfitting. Once I had done this I testesd various variables and found the sets that gave the highest accuracy. What's more I then created a system that can be used to find a probabilistic measure of the neural network and find which probabilitic measure gives the highest accuracy. I'm also learning the basics of manim with the hope that it will help me with my oral presentation. My next steps will be to compare my results to the basic ROOT results and aim to get a greater accuracy.
+

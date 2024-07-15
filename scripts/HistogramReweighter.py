@@ -1,5 +1,5 @@
 
-import numpy as np
+import numpy             as np
 
 from hep_ml import reweight
 from misc   import sharedVariables, fullVariables, fileNamesRoot, fileNamesCSV
@@ -11,9 +11,9 @@ class GBReweight():
     def __init__(self, decayMode = "kpi"):
         self.decayMode           = decayMode
         self.trainingVariables   = sharedVariables[:5] + [fullVariables[decayMode][10]]
+        self.readData()
 
     def executeAll(self):
-        self.readData()
         self.trainReweighter()
         self.computeWeights()
         self.saveMonteCarloDataToCSV()
@@ -48,10 +48,8 @@ class GBReweight():
         print(f"Monte Carlo Data saved to csv file {fileNamesCSV[self.decayMode]}")
 
 
-if __name__ == "__main__":
-
+def convertAllToCSV():
     print()
-
     print("- kpi sideband data")
     rootToCSV(decayMode = "kpisb", variables = fullVariables["kpi"])
     print()
@@ -61,7 +59,7 @@ if __name__ == "__main__":
     print()
 
     print("- kpi monte carlo data")
-    kpi  = GBReweight(decayMode="kpi")
+    kpi = GBReweight(decayMode="kpi")
     kpi.executeAll()
     print("kpi data has been reweighted")
     print()
@@ -72,3 +70,8 @@ if __name__ == "__main__":
     print("pipi data has been reweighted")
     print()
     print("\n- All Completed -")
+
+
+if __name__ == "__main__":
+    kpi = GBReweight(decayMode="kpi")
+    kpi.createHistograms()

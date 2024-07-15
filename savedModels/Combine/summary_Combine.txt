@@ -1,0 +1,52 @@
+RandomForestClassifier(max_depth=3, n_estimators=50)
+Confusion Matrix
+[[1304  910]
+ [ 104 2229]]
+Test Data Score     : 0.7722007131487231
+Training Data Score : 0.8487708711273741
+
+GradientBoostingClassifier(learning_rate=0.012, n_estimators=800)
+Confusion Matrix
+[[1518  696]
+ [  87 2246]]
+Test Data Score     : 0.8241729073955978
+Training Data Score : 0.8970861170821752
+
+AdaBoostClassifier(learning_rate=0.1, n_estimators=500)
+Confusion Matrix
+[[1516  698]
+ [ 102 2231]]
+Test Data Score     : 0.820506491248653
+Training Data Score : 0.8855491823584514
+
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense (Dense)                        │ (None, 13)                  │             182 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_1 (Dense)                      │ (None, 130)                 │           1,820 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_2 (Dense)                      │ (None, 13)                  │           1,703 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_3 (Dense)                      │ (None, 1)                   │              14 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 3,719 (14.53 KB)
+ Trainable params: 3,719 (14.53 KB)
+ Non-trainable params: 0 (0.00 B)
+
+Confusion Matrix 
+[[1627  587]
+ [ 136 2197]]
+Test Data Score     : 0.9327244194002162
+Training Data Score : 0.9393621441123874
+
+Combined Classifier
+Confusion Matrix
+[[1627  587]
+ [ 135 2198]]
+Test Data Score     : 0.9339261009412495
+Train Data Score    : 0.9409380104614766
+
+isEvenSplit = True
+trainingVariables = ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']

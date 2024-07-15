@@ -1,0 +1,46 @@
+RandomForestClassifier(max_depth=3, n_estimators=50)
+Confusion Matrix
+[[1614  660]
+ [ 231 2042]]
+Test Data Score     : 0.8040673641590449
+Training Data Score : 0.8180209450134801
+
+GradientBoostingClassifier(learning_rate=0.012, n_estimators=800)
+Confusion Matrix
+[[1774  500]
+ [ 229 2044]]
+Test Data Score     : 0.8396876103979221
+Training Data Score : 0.8691983843659191
+
+AdaBoostClassifier(learning_rate=0.1, n_estimators=500)
+Confusion Matrix
+[[1841  433]
+ [ 284 1989]]
+Test Data Score     : 0.8423208124435798
+Training Data Score : 0.8585680040975728
+
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense (Dense)                        │ (None, 8)                   │              72 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_1 (Dense)                      │ (None, 80)                  │             720 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_2 (Dense)                      │ (None, 8)                   │             648 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_3 (Dense)                      │ (None, 1)                   │               9 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 1,449 (5.66 KB)
+ Trainable params: 1,449 (5.66 KB)
+ Non-trainable params: 0 (0.00 B)
+
+Confusion Matrix 
+[[1697  577]
+ [ 191 2082]]
+Test Data Score     : 0.9135795876878239
+Training Data Score : 0.9252238978634392
+
+
+isEvenSplit = True
+trainingVariables = ['gamma_PT', 'nTracks', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
