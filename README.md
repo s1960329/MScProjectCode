@@ -117,3 +117,40 @@ These next few days have been incredibly frustrating, The  end of the week has t
 13/07/2024
 This week I tested various parametres for the classification models and wrote up a large amount of the project into the final .py classification files. I first experimented with overfitting tests and found the largest possible values that gave the most accurate result while also preventing overfitting. Once I had done this I testesd various variables and found the sets that gave the highest accuracy. What's more I then created a system that can be used to find a probabilistic measure of the neural network and find which probabilitic measure gives the highest accuracy. I'm also learning the basics of manim with the hope that it will help me with my oral presentation. My next steps will be to compare my results to the basic ROOT results and aim to get a greater accuracy.
 
+16/07/2024
+- Which different models could we use that are different enoguh for the votes
+- Why does the threshold result give such wildly different answers
+- Should I save all the models with joblib
+- How much more accurate would the model be with more data?
+- 
+
+
+
+# with uproot.open(fileNamesRoot["f2"]) as TChain: # type: ignore
+#     TTree = TChain["dataset"]
+#     TestTree = TTree["TestTree"]
+#     TrainTree = TTree["TrainTree"]
+
+
+# testVariables  = TestTree.keys()
+# trainVariables = TrainTree.keys()
+
+
+# testRootFile = TestTree.arrays(testVariables, library="pd", aliases ={"B_ETA": "-log(tan(atan(B_PT/B_PZ)/2))"}) # type: ignore
+# testRootFile = testRootFile.reset_index(drop=True)
+
+# trainRootFile = TrainTree.arrays(trainVariables, library="pd", aliases ={"B_ETA": "-log(tan(atan(B_PT/B_PZ)/2))"}) # type: ignore
+# trainRootFile = trainRootFile.reset_index(drop=True)
+
+
+
+# print(len( trainRootFile[ trainRootFile["className"] == "Signal" ] ))
+# print(len( trainRootFile[ trainRootFile["className"] == "Background" ] ))
+# print()
+# print(trainRootFile)
+# print()
+# print(testRootFile)
+
+
+# testRootFile.to_csv(fileNamesCSV["f2v"])
+# trainRootFile.to_csv(fileNamesCSV["f2t"])

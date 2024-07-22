@@ -1,0 +1,68 @@
+class NeuralNetworkClassifier():
+
+    def __call__(self):
+        return self.name
+
+    def __init__(self, name, hiddenLayers, inputVariables):
+        self.name           = name
+        self.hiddenLayers   = hiddenLayers
+
+        self.FullData       = pd.read_csv(f"{dataPath}/dataLearn/FullDataClassified.csv", index_col=0)
+        self.signalData     = pd.read_csv(f"{dataPath}/dataLearn/SignalData.csv",index_col=0)
+        self.backgroundData = pd.read_csv(f"{dataPath}/dataLearn/BackgroundData.csv",index_col=0)
+        train               = pd.read_csv(f"{dataPath}/dataLearn/TrainingData.csv",index_col=0)
+        test                = pd.read_csv(f"{dataPath}/dataLearn/TestingData.csv",index_col=0)
+
+        self.X_train        = train[inputVariables]
+        self.Y_train        = train["isSignal"]
+        self.W_train        = train["weights"]
+
+        self.X_test         = test[inputVariables]
+        self.Y_test         = test["isSignal"]
+        self.W_test         = test["weights"]
+        
+        self.createModel()
+        self.trainModel()
+    
+    def createModel(self):
+        self.NNmodel = Sequential()
+        for layer in self.hiddenLayers: self.NNmodel.add(layer)
+        self.NNmodel.compile(loss="binary_crossentropy", optimizer="adam", weighted_metrics=["accuracy"])
+
+    def trainModel(self):
+        EarlyStoppingCallback = EarlyStopping(monitor="val_loss", patience=10)
+        history = self.NNmodel.fit(self.X_train, self.Y_train, sample_weight=self.W_train, validation_data=(self.X_test, self.Y_test), batch_size=20, epochs=500, callbacks=[EarlyStoppingCallback])
+        return history
+    
+    def evaluateModel(self):
+        Y_predTest  = self.NNmodel.predict(self.X_test)
+        Y_predTrain = self.NNmodel.predict(self.X_train)
+
+        NNfalsePositiveRate, NNtruePositiveRate, threshold = roc_curve(self.Y_test, Y_predTest)
+        confusionMatrixNN = confusion_matrix(y_true=self.Y_test, y_pred=np.round(Y_predTest))
+        
+        print(f"\nConfusion Matrix \n{confusionMatrixNN}\n")
+        print(f"Test Data Score     : {roc_auc_score(self.Y_test,  Y_predTest)}\n")
+        print(f"Training Data Score : {roc_auc_score(self.Y_train, Y_predTrain)}\n")
+        return (NNfalsePositiveRate, NNtruePositiveRate, threshold)
+    
+    def summary(self):
+        return self.NNmodel.summary()
+
+    def predict(self, inputData):
+        return self.NNmodel.predict(inputData).flatten()
+
+    def executeAll(self):
+        self.summary()
+        self.TrainModel()
+        self.EvaluateModel()
+        self.saveModel()
+
+    def saveModel(self, filename):
+        os.makedirs(os.path.dirname(f"{modelPath}/{name}"), exist_ok=True)
+        joblib.dump(self, f"{modelPath}/{name}/{filename}.joblib")
+
+
+
+#########
+
