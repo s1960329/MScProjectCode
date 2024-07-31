@@ -18,6 +18,7 @@ modelPath         = "/Users/finnjohnonori/Documents/GitHubRepositories/MScProjec
 
 
 sharedVariables   = ["nTracks", "B_P", "gamma_PT", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV"]
+VariableUnits     = ["",        "(MeV/c)","(MeV/c)",   "",                "",      "",             "",                            "(mm)",         "(MeV/c)",       "(μm)", "(MeV/c)","(μm)","(MeV/c)","(μm)"]
 
 
 uniqueVariables   = {"kpi"      : ["Kst_892_0_PT",        "Kst_892_0_IP_OWNPV",        "Kplus_PT",       "Kplus_IP_OWNPV" ],
@@ -28,6 +29,9 @@ uniqueVariables   = {"kpi"      : ["Kst_892_0_PT",        "Kst_892_0_IP_OWNPV", 
 fullVariables     = {"kpi"      : sharedVariables + uniqueVariables["kpi"],
                      "pipi"     : sharedVariables + uniqueVariables["pipi"],
                      "any"      : sharedVariables + uniqueVariables["any"]}
+
+
+UnitDict = dict(zip(fullVariables["any"], VariableUnits))
 
 
 fileNamesRoot     = {"kpi"      : f"{dataPath}/dataROOT/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel.root",
@@ -50,9 +54,9 @@ fileNamesCSV      = {"kpi"      : f"{dataPath}/dataCSV/kpi_montecarlo_reweighted
                      "f2t"      : f"{dataPath}/dataCSV/kpi_BDT_2018_fold2_train.csv"}
 
 
-histStyle         = {"bins"     : 100, 
+histStyle         = {"bins"     : 50, 
                      "density"  : True,
-                     "alpha"    : 1, 
+                     "alpha"    : 0.8, 
                      "histtype" : "step"}
 
 
@@ -83,12 +87,17 @@ def rootToCSV(decayMode="sm", variables=fullVariables["kpi"] + ["NB0_Kpigamma_sw
     print(f"Data saved to csv file {fileNamesCSV[decayMode]}")
 
 
+def createAllReweightedHistograms():
+    allVariables = sharedVariables + uniqueVariables["any"]
+    for var in allVariables:
+        createReweightedHistogram(var)
+
+
 #Creates a reweighted histogram with a correponding plot
 def createReweightedHistogram(variable = "nTracks", decayMode = "pipi"):
     
     canvas, (disti,ratio) = plt.subplots(2,1, gridspec_kw={"height_ratios" : [2,1] },figsize=(8, 7))
-    canvas.suptitle(f"{variable} Distribution")
-    canvas.tight_layout()
+    canvas.suptitle(f"{variable} Distribution {UnitDict[variable]}")
 
     MonteCarloData = pd.read_csv(fileNamesCSV[decayMode], index_col=0)
     SampleData     = pd.read_csv(fileNamesCSV["sm"],   index_col=0)
@@ -99,21 +108,28 @@ def createReweightedHistogram(variable = "nTracks", decayMode = "pipi"):
     SampleData     = SampleData.rename(    columns = kpiDict )
     MonteCarloData = MonteCarloData.rename(columns = pipiDict)
 
+    minX = 0    #max(min(SampleData[variable]), min(MonteCarloData[variable]))
+    maxX = 10   #min(max(SampleData[variable]), max(MonteCarloData[variable]))
+    print(variable, minX, maxX)
+
     histY, histX, _  = disti.hist([SampleData[variable],         MonteCarloData[variable],  MonteCarloData[variable]], 
                        weights =  [SampleData["NB0_Kpigamma_sw"],MonteCarloData["weights"], np.ones(len(MonteCarloData))],
                        label   =  ["Sample",                     "Weighted Monte Carlo",    "Monte Carlo"],
+                       range   =  [minX, maxX],
                        color   =  [colors["red"],                colors["green"],           colors["blue"]],
                        **histStyle)
-    
-    histBars = dict( zip(["sm","wmc", "mc"],histY) )
 
+    histBars = dict( zip(["sm","wmc", "mc"],histY) )
 
     ratioDataMC  = ((histBars["sm"] - histBars["mc" ])**2) / histBars["sm"]
     ratioDataMCW = ((histBars["sm"] - histBars["wmc"])**2) / histBars["sm"]
+    ratioDataMC[    (histBars["sm"] < 0) | (histBars["mc" ] < 0)] = np.nan
+    ratioDataMCW[   (histBars["sm"] < 0) | (histBars["wmc"] < 0)] = np.nan
+    
 
-    ratio.scatter(histX[:-1],ratioDataMC,  c=colors["blue"], s=5)
-    ratio.scatter(histX[:-1],ratioDataMCW, c=colors["green"], s=5)
-    ratio.set_title(f"Chi Squared Difference: {sum(np.nan_to_num(ratioDataMCW - ratioDataMC))}")
+    ratio.plot(histX[:-1], ratioDataMC,  c=colors["blue"],  alpha=0.8, linewidth=0.7)
+    ratio.plot(histX[:-1], ratioDataMCW, c=colors["green"], alpha=0.8, linewidth=0.7)
+    ratio.set_title(f"Chi Squared Difference from Sample, Total Change: {float("%.3g" % sum(np.nan_to_num(ratioDataMCW - ratioDataMC)))}")
     ratio.set_xlim(min(histX), max(histX))
     ratio.grid(axis="both", linestyle="dashed", alpha=0.3)
 
@@ -122,7 +138,7 @@ def createReweightedHistogram(variable = "nTracks", decayMode = "pipi"):
     disti.grid(axis="both", linestyle="dashed", alpha=0.3)
     disti.legend()
 
-    plt.savefig(f"{imagePath}Reweighted/{variable}_{decayMode}_ReweightedDistribution.png", dpi=227)
+    plt.savefig(f"{imagePath}/Reweighted/{variable}_{decayMode}_ReweightedDistribution.png", dpi=227)
     plt.close()
 
 
@@ -231,49 +247,41 @@ def FindBestCutOff(X_testNormalised, Y_test, imageName="CutOffplot.png"):
 
 
 
-def createAllReweightedHistograms():
-    allVariables = sharedVariables + uniqueVariables["any"]
-    for var in allVariables:
-        createReweightedHistogram(var)
+
 
 
 
 def loadModels(name = "testModel"):
-    AD = joblib.load(f"{modelPath}{name}/AdaBoost_{name}.joblib")
-    NN = joblib.load(f"{modelPath}{name}/GradientBoosting_{name}.joblib")
-    RF = joblib.load(f"{modelPath}{name}/RandomForest_{name}.joblib")
-    GB = load_model( f"{modelPath}{name}/NNmodel_{name}.keras")
+    AD = joblib.load(f"{modelPath}{name}/AD{name}.joblib")
+    NN = joblib.load(f"{modelPath}{name}/GB{name}.joblib")
+    RF = joblib.load(f"{modelPath}{name}/RF{name}.joblib")
+    GB = joblib.load(f"{modelPath}{name}/NN{name}.keras")
     return (AD,GB,NN,RF)
 
 
-def figureOfMerit(name, cut):
 
-    FullDataClassified    = pd.read_csv(f"{dataPath}/dataLearn/FullDataClassified.csv")
-    FullDataClassifiedCut = FullDataClassified[FullDataClassified[f"SignalProb{name}"] > cut]
-
-
-    S = 6000
-    c = 1
-    B = 6000
-    
-    FoM = S / np.sqrt(S + c*B)
-    return FoM
 
 
 if __name__ == "__main__":
 
-    FullDataNorm = pd.read_csv(f"{dataPath}/dataLearn/FullData.csv", index_col=0)
+    # "piminus_IP_OWNPV"
+    # "daughterplus_IP_OWNPV"
+    # "B_SmallestDeltaChi2OneTrack"
+    createReweightedHistogram(variable = "piminus_IP_OWNPV", decayMode = "pipi")
+    createReweightedHistogram(variable = "daughterplus_IP_OWNPV", decayMode = "pipi")
 
-    FullDataNorm   = normaliseData(FullDataNorm, varToNorm = fullVariables["any"])
-    backgroundNorm = FullDataNorm[FullDataNorm["isSignal"] == 0.0]
-    signalNorm     = FullDataNorm[FullDataNorm["isSignal"] == 1.0]
-    trainDataNorm, testDataNorm    = train_test_split(FullDataNorm)
+    # FullDataNorm = pd.read_csv(f"{dataPath}/dataLearn/FullData.csv", index_col=0)
 
-    FullDataNorm.to_csv(f"{dataPath}/dataLearn/FullDataNorm.csv")
-    trainDataNorm.to_csv(f"{dataPath}/dataLearn/TestNorm.csv")
-    testDataNorm.to_csv(f"{dataPath}/dataLearn/TrainNorm.csv")
-    backgroundNorm.to_csv(f"{dataPath}/dataLearn/BackgroundNorm.csv")
-    signalNorm.to_csv(f"{dataPath}/dataLearn/SignalNorm.csv")
+    # FullDataNorm   = normaliseData(FullDataNorm, varToNorm = fullVariables["any"])
+    # backgroundNorm = FullDataNorm[FullDataNorm["isSignal"] == 0.0]
+    # signalNorm     = FullDataNorm[FullDataNorm["isSignal"] == 1.0]
+    # trainDataNorm, testDataNorm    = train_test_split(FullDataNorm)
+
+    # FullDataNorm.to_csv(f"{dataPath}/dataLearn/FullDataNorm.csv")
+    # trainDataNorm.to_csv(f"{dataPath}/dataLearn/TestNorm.csv")
+    # testDataNorm.to_csv(f"{dataPath}/dataLearn/TrainNorm.csv")
+    # backgroundNorm.to_csv(f"{dataPath}/dataLearn/BackgroundNorm.csv")
+    # signalNorm.to_csv(f"{dataPath}/dataLearn/SignalNorm.csv")
 
 
 

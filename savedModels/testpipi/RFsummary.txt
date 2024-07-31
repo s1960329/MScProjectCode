@@ -1,0 +1,14 @@
+
+Test Data Score     : 0.9546324730176535
+Test Confusion Matrix
+[[4018  164]
+ [ 478 1837]]
+
+Train Data Score    : 0.9599022266316313
+Train Confusion Matrix
+[[12272   439]
+ [ 1415  5363]]
+
+Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
+
+RandomForestClassifier(max_depth=6, n_estimators=2000, verbose=1)
