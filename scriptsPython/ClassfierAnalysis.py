@@ -1,69 +1,53 @@
+from xml.parsers.expat import model
 import matplotlib.pyplot as plt
 import joblib
 import pandas as pd
 import numpy as np
 import seaborn as sb
 
-from misc import *
+from Classifiers import *
 
-from scriptsPython.Classifiers import ForestClassifiers, NeuralNetworkClassifier
 
 histStyle         = {"bins"     : 50, 
-                     "alpha"    : 0.8, 
+                     "alpha"    : 0.8,
+                     "density"  : True, 
                      "histtype" : "step"}
 
+def loadModels(name = "Bestpipi"):
+    RF = joblib.load(f"savedModels/{name}/RF{name}.joblib")
+    AD = joblib.load(f"savedModels/{name}/AD{name}.joblib")
+    GB = joblib.load(f"savedModels/{name}/GB{name}.joblib")
+    NN = joblib.load(f"savedModels/{name}/NN{name}.joblib")
+    return (RF,AD,GB,NN)
 
-def createProbabilityDistribution(model, data):
-    SignalData     = data[data["isSignal"] == 1.0]
-    BackgroundData = data[data["isSignal"] == 0.0]
+#TODO plot the ROC curve that you get from the model
+def plotROCcurve(model, inputData = pd.DataFrame(), cut = None):
+    pass
 
-    X_SignalData     = SignalData[model.inputVariables]
-    X_BackgroundData = BackgroundData[model.inputVariables]
+#TODO test seperated predictions
+def plotSeperatedPredictions(model, inputData = pd.DataFrame()):
 
-    SignalData["Prediction"]     = model.predict(X_SignalData)
-    BackgroundData["Prediction"] = model.predict(X_BackgroundData)
-    
-    plt.title("Model Prediction Distribution")
+    (SignalData,BackgroundData) = model.getSeperatedPredictions(inputData)
+
+    plt.title(f"{model.name} Model Prediction Distribution")
     plt.hist( [SignalData["Prediction"], BackgroundData["Prediction"]],
     weights = [SignalData["weights"],    BackgroundData["weights"]   ],
     label   = ["Signal",                 "Background"],
     **histStyle)
     plt.legend()
-
     plt.show()
 
+#TODO adapt for new code
+def plotFigureOfMerit(model, inputData = pd.DataFrame()):
 
-
-def getFOMandEfflist(model, data, cuts):
-    sigEff = []
-    l      = []
-
-    data["Prediction"] = model.predict(data)
-
-    SignalData     = data[data["isSignal"] == 1.0]
-    BackgroundData = data[data["isSignal"] == 0.0]
-    
-    for cut in cuts:
-        eBDT  = len(SignalData[ (SignalData["Prediction"] > cut) ]) / len(SignalData)
-        Bcomb = len(data[ (data["Prediction"] > cut) ])
-        l.append(len(SignalData)*eBDT / np.sqrt(len(SignalData)*eBDT + Bcomb))
-        sigEff.append(eBDT)
-
-    return (sigEff, l)
-
-
-
-def createFigureOfMerit(model, data):
-
-    cuts = np.linspace(0,1,1000)
-    (sigEff, l) = getFOMandEfflist(model, data, cuts)
+    (sigEff, bacEff, FoM) = model(model, data)
 
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
 
     ax1.set_title(f"{model.name}")
-    ax1.plot(cuts, l,      c = colors["red"],  label="Figure of Merit")
-    ax2.plot(cuts, sigEff, c = colors["blue"], label="Signal Efficiency")
+    ax1.plot(np.linspace(0,1,1001), FoM,      c = colors["red"],   label="Figure of Merit")
+    ax2.plot(np.linspace(0,1,1001), sigEff,   c = colors["blue"],  label="Signal Efficiency")
 
     ax1.set_xlabel("Cut")
     ax1.set_ylabel("Figure of Merit"  , color=colors["red"])
@@ -75,11 +59,30 @@ def createFigureOfMerit(model, data):
 
     plt.show()
 
+#TODO adapt for new code
+def plotEfficiencies(model, inputData = pd.DataFrame()):
+    (sigEff, bacEff, FoM) = getFOMandEfflist(model, data)
 
+    bestCut = FindBestCut(model, data)
+    print("Best Cut: ", bestCut)
 
-def variableDistribution(variable, model, data):
+    plt.plot(np.linspace(0,1,1001),sigEff, label="Signal Efficiency", alpha = 0.2)
+    plt.plot(np.linspace(0,1,1001),bacEff, label="Background Efficiency", alpha = 0.2)
+    plt.plot(np.linspace(0,1,1001),np.array(sigEff) - np.array(bacEff), label="Difference")
+    plt.axvline(x = bestCut, c = colors["black"], label=f"Best Cut: {bestCut}", alpha=0.2)
+    plt.legend()
+    plt.show()
+
+#TODO add the true distributions for comparision
+def plotVariableDistribution(variable, model, data = pd.DataFrame.empty, cut = 0.2):
+
+    if data == pd.DataFrame.empty:
+        data = model.X_test
+        data["isSignal"] = model.Y_test
+        data["weights"]  = model.W_test
+
     X_Data = data[model.inputVariables]
-    data["Prediction"] = roundUp(model.predict(X_Data))
+    data["Prediction"] = roundUp(model.predict(X_Data), cut)
 
     SignalData     = data[data["Prediction"] == 1]
     BackgroundData = data[data["Prediction"] == 0]
@@ -90,11 +93,10 @@ def variableDistribution(variable, model, data):
     label   = ["Signal",            "Background"],
     **histStyle)
     plt.legend()
-
     plt.show()
 
-
-def createCorelationMatrix():
+#TODO?
+def plotCorelationMatrix():
 
     plt.title("Correlation Matrix")
     data   = pd.read_csv("data/Raw/EvenTestData.csv", index_col=0)
@@ -105,7 +107,8 @@ def createCorelationMatrix():
 
     plt.show()
 
-def CreateCorelationPlots():
+#TODO?
+def createCorelationPlots():
     
     plt.title("Correlation Matrix")
     data   = pd.read_csv("data/Raw/EvenTestData.csv", index_col=0)
@@ -120,16 +123,10 @@ def CreateCorelationPlots():
     pass
 
 
-
-
 if __name__ == "__main__":
 
-    model  = joblib.load("savedModels/EvenFinalModel/GBEvenFinalModel.joblib")
-    data   = pd.read_csv("data/Raw/EvenTestData.csv", index_col=0)
+    (RF,AD,GB,NN) = loadModels()
+    (TPR, FPR) = NN.createROCcurve()
 
-    # print(model.predict(X_test))
-    # createCorelationMatrix()
-    # variableDistribution("nTracks", model, data)
-    # CreateCorelationPlots()
-    # createFigureOfMerit(model, data)
-    createProbabilityDistribution(model, data)
+    plt.plot(TPR, FPR)
+    plt.show()
