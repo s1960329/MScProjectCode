@@ -4,17 +4,26 @@ import pandas as pd
 import ROOT
 import numpy  as np
 
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from HistogramReweighter import GBReweight
 
-sharedVariables   = ["nTracks", "B_P", "gamma_PT", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV"]
 
 dataPath          = "/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/data"
+
+fileNamesRoot     = {"kpi"      : f"{dataPath}/dataROOT/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel.root",
+                     "kpisb"    : f"{dataPath}/dataROOT/kpiG_sideband_2018.root",
+                     "pipisb"   : f"{dataPath}/dataROOT/pipiG_sideband_2018_rhoMass.root",
+                     "pipi"     : f"{dataPath}/dataROOT/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel.root",
+                     "sm"       : f"{dataPath}/dataROOT/Sample_Kpigamma_2018_selectedTree_with_sWeights_Analysis_2hg_Unbinned-Mask1.root",
+                     "f1"       : f"{dataPath}/dataROOT/BDT_2018_fold1.root",
+                     "f2"       : f"{dataPath}/dataROOT/BDT_2018_fold2.root"}
+
+sharedVariables   = ["nTracks", "B_P", "gamma_PT", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV"]
 
 uniqueVariables   = {"kpi"      : ["Kst_892_0_PT",        "Kst_892_0_IP_OWNPV",        "Kplus_PT",       "Kplus_IP_OWNPV" ],
                      "pipi"     : ["rho_770_0_PT",        "rho_770_0_IP_OWNPV",        "piplus_PT",      "piplus_IP_OWNPV"],
                      "any"      : ["daughter_neutral_PT", "daughter_neutral_IP_OWNPV", "daughterplus_PT","daughterplus_IP_OWNPV"]}
-
 
 fullVariables     = {"kpi"      : sharedVariables + uniqueVariables["kpi"],
                      "pipi"     : sharedVariables + uniqueVariables["pipi"],
@@ -114,9 +123,12 @@ def createLaisData():
     
 
 if __name__ == "__main__":
-    # combineSignalAndBackground()
-    createTestAndTrainData()
-    createEvenTestAndTrainData()
-    # print(pd.read_csv("data/kpi/FullData.csv"))
-    
+    var      = "gamma_PT"
+    sideband = readRootFile(rootFilePath=fileNamesRoot["pipisb"], variables=fullVariables["pipi"])
+    signal   = readRootFile(rootFilePath=fileNamesRoot["pipi"  ], variables=fullVariables["pipi"])
+    full     = pd.concat((signal,sideband))
 
+    plt.hist([signal[var],sideband[var], full[var]], label=["Signal","Background","Total"], bins=50, histtype="step")
+    plt.title(f"{var} Distribution")
+    plt.legend()
+    plt.show()

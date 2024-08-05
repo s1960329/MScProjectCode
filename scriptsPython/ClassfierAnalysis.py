@@ -13,6 +13,7 @@ histStyle         = {"bins"     : 50,
                      "density"  : True, 
                      "histtype" : "step"}
 
+#DONE
 def loadModels(name = "Bestpipi"):
     RF = joblib.load(f"savedModels/{name}/RF{name}.joblib")
     AD = joblib.load(f"savedModels/{name}/AD{name}.joblib")
@@ -20,82 +21,109 @@ def loadModels(name = "Bestpipi"):
     NN = joblib.load(f"savedModels/{name}/NN{name}.joblib")
     return (RF,AD,GB,NN)
 
-#TODO plot the ROC curve that you get from the model
-def plotROCcurve(model, inputData = pd.DataFrame(), cut = None):
-    pass
+#DONE
+def plotROCcurve(models, inputData = pd.DataFrame(), cut = None):
 
-#TODO test seperated predictions
+    plt.plot([0,1],[0,1], c="black", linestyle=":")
+    plt.grid(linestyle="--",alpha=0.3)
+    plt.title("ROC curves")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Postive Rate")
+
+    for model in models:
+        (TPR, FPR) = model.getROCCurveValues(inputData)
+        plt.plot(TPR, FPR, label=f"{model.abbreviation}")
+    
+    plt.legend()
+    plt.show()
+
+#DONE
 def plotSeperatedPredictions(model, inputData = pd.DataFrame()):
 
-    (SignalData,BackgroundData) = model.getSeperatedPredictions(inputData)
+    (SignalData, BackgroundData) = model.getSeperatedPredictions(inputData)
 
     plt.title(f"{model.name} Model Prediction Distribution")
-    plt.hist( [SignalData["Prediction"], BackgroundData["Prediction"]],
+    plt.hist( [SignalData[f"{model.name} Prediction"], BackgroundData[f"{model.name} Prediction"]],
     weights = [SignalData["weights"],    BackgroundData["weights"]   ],
     label   = ["Signal",                 "Background"],
     **histStyle)
+
     plt.legend()
     plt.show()
 
-#TODO adapt for new code
+#DONE
+def plotNewSignal(model, variable, inputData = pd.DataFrame()):
+
+    plt.title(f"{model.name} Model Prediction Distribution")
+    if inputData.empty: 
+        inputData = model.X_test
+        inputData["weights"] = model.W_test
+    
+    FilteredData = inputData[model.predict(inputData)>0.5]
+
+    plt.hist( [inputData[variable],  FilteredData[variable]] ,
+    weights = [inputData["weights"], FilteredData["weights"]],
+    label   = ["Oringinal",            "Background Removed"],
+    bins    = 50, 
+    alpha   = 0.8, 
+    histtype = "step")
+
+    plt.legend()
+    plt.show()
+
+#DONE
 def plotFigureOfMerit(model, inputData = pd.DataFrame()):
-
-    (sigEff, bacEff, FoM) = model(model, data)
-
+    FoM = model.getFigureOfMerit(inputData)
     fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-
     ax1.set_title(f"{model.name}")
-    ax1.plot(np.linspace(0,1,1001), FoM,      c = colors["red"],   label="Figure of Merit")
-    ax2.plot(np.linspace(0,1,1001), sigEff,   c = colors["blue"],  label="Signal Efficiency")
-
+    ax1.plot(np.linspace(0,1,1001), FoM, c = colors["red"], label="Figure of Merit")
     ax1.set_xlabel("Cut")
-    ax1.set_ylabel("Figure of Merit"  , color=colors["red"])
-    ax2.set_ylabel("Signal Efficiency", color=colors["blue"])
-
+    ax1.set_ylabel("Figure of Merit", color=colors["red"])
     ax1.set_xlim(0,1)
     ax1.set_ylim(0)
-    ax2.set_ylim(0)
 
+    bestCut = model.getBestCut(inputData)
+    print("Best Cut: ", bestCut)
+    plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Best Cut: {bestCut}", alpha=0.2)
     plt.show()
 
-#TODO adapt for new code
+#DONE
 def plotEfficiencies(model, inputData = pd.DataFrame()):
-    (sigEff, bacEff, FoM) = getFOMandEfflist(model, data)
-
-    bestCut = FindBestCut(model, data)
+    (sigEff, bacEff) = model.getEfficiencies(inputData)
+    bestCut = model.getBestCut(inputData)
     print("Best Cut: ", bestCut)
 
-    plt.plot(np.linspace(0,1,1001),sigEff, label="Signal Efficiency", alpha = 0.2)
-    plt.plot(np.linspace(0,1,1001),bacEff, label="Background Efficiency", alpha = 0.2)
-    plt.plot(np.linspace(0,1,1001),np.array(sigEff) - np.array(bacEff), label="Difference")
-    plt.axvline(x = bestCut, c = colors["black"], label=f"Best Cut: {bestCut}", alpha=0.2)
+    plt.plot(np.linspace(0,1,1001),sigEff, label="Signal", alpha = 0.2)
+    plt.plot(np.linspace(0,1,1001),bacEff, label="Background", alpha = 0.2)
+    plt.plot(np.linspace(0,1,1001),np.array(sigEff) - np.array(bacEff), label="Diff")
+    plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Best Cut", alpha=0.2)
     plt.legend()
     plt.show()
 
-#TODO add the true distributions for comparision
-def plotVariableDistribution(variable, model, data = pd.DataFrame.empty, cut = 0.2):
+#DONE
+def plotVariableDistribution(variable, model, inputData = pd.DataFrame(), cut = 0.5):
 
-    if data == pd.DataFrame.empty:
-        data = model.X_test
-        data["isSignal"] = model.Y_test
-        data["weights"]  = model.W_test
+    if inputData.empty:
+        inputData = model.X_test
+        inputData["isSignal"] = model.Y_test
+        inputData["weights"]  = model.W_test
 
-    X_Data = data[model.inputVariables]
-    data["Prediction"] = roundUp(model.predict(X_Data), cut)
+    X_Data = inputData[model.inputVariables]
+    inputData["Prediction"] = roundUp(model.predict(X_Data), cut)
 
-    SignalData     = data[data["Prediction"] == 1]
-    BackgroundData = data[data["Prediction"] == 0]
+    SignalData     = inputData[inputData["Prediction"] == 1]
+    BackgroundData = inputData[inputData["Prediction"] == 0]
 
     plt.title(f"{variable} Prediction Distribution")
-    plt.hist( [SignalData[variable], BackgroundData[variable] ],
-    weights = [SignalData["weights"],BackgroundData["weights"]],
-    label   = ["Signal",            "Background"],
-    **histStyle)
+    plt.hist( [SignalData[variable], BackgroundData[variable],  inputData[variable]], 
+    weights = [SignalData["weights"],BackgroundData["weights"], inputData["weights"]],
+    label   = ["Signal","Background","Total"], 
+    bins=50, 
+    histtype="step")
     plt.legend()
     plt.show()
 
-#TODO?
+#DONE
 def plotCorelationMatrix():
 
     plt.title("Correlation Matrix")
@@ -107,7 +135,7 @@ def plotCorelationMatrix():
 
     plt.show()
 
-#TODO?
+#DONE
 def createCorelationPlots():
     
     plt.title("Correlation Matrix")
@@ -126,7 +154,5 @@ def createCorelationPlots():
 if __name__ == "__main__":
 
     (RF,AD,GB,NN) = loadModels()
-    (TPR, FPR) = NN.createROCcurve()
+    plotVariableDistribution("nTracks",GB)
 
-    plt.plot(TPR, FPR)
-    plt.show()

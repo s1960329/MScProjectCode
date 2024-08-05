@@ -1,10 +1,12 @@
 
-Test Data Score     : 0.9680182371636954
+Test Data Log Loss  : 0.20872117168028909
+Test Data Score     : 0.970196237792161
 Test Confusion Matrix
 [[3996  186]
- [ 340 1975]]
+ [ 339 1976]]
 
-Train Data Score    : 0.9758626755695812
+Train Data Log Loss : 0.1722608678997994
+Train Data Score    : 0.9803227305482454
 Train Confusion Matrix
 [[12257   454]
  [  946  5832]]
