@@ -1,15 +1,15 @@
 
-Test Data Log Loss  : 0.19196921506833853
-Test Data Score     : 0.9589118990809832
+Test Data Log Loss  : 0.19240561698845265
+Test Data Score     : 0.9583622875545894
 Test Confusion Matrix
-[[ 6301  1898]
- [ 1390 31686]]
+[[ 2497   779]
+ [  484 12750]]
 
-Train Data Log Loss : 0.18444727242851977
-Train Data Score    : 0.963100287894469
+Train Data Log Loss : 0.18562686433381664
+Train Data Score    : 0.962538184158546
 Train Confusion Matrix
-[[19043  5733]
- [ 3778 95270]]
+[[ 22795   6904]
+ [  4575 114315]]
 
 Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
 

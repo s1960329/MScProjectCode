@@ -1,0 +1,17 @@
+
+Test Data Log Loss  : 0.6796966990235856
+Test Data Score     : 0.5715484267025148
+Test Confusion Matrix
+[[948   8]
+ [818  45]]
+
+Train Data Log Loss : 0.3743915082973286
+Train Data Score    : 0.7390394839621419
+Train Confusion Matrix
+[[8107   30]
+ [7803  427]]
+
+Input Variables     : ['nTracks', 'B_P', 'gamma_PT', 'daughter_neutral_PT', 'B_Cone3_B_ptasy', 'B_ETA']
+
+GradientBoostingClassifier(learning_rate=0.005, max_depth=6, n_estimators=2500,
+                           verbose=1)

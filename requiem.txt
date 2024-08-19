@@ -612,3 +612,156 @@ if __name__ == "__main__":
 # predict figure of merit
 # create probability distribution with cuts
 # create variable dsitibution with cut
+
+
+
+#####
+
+
+
+    plt.plot([0,1],[0,1], c="black", linestyle=":")
+    plt.grid(linestyle="--",alpha=0.3)
+    plt.title("ROC curves")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Postive Rate")
+
+    (TPR, FPR) = NN.getROCCurveValues()
+    plt.plot(TPR, FPR)
+    plt.show()
+ 
+
+    (SignalData, BackgroundData) = NN.getSeperatedPredictions()
+
+    plt.hist(
+    [BackgroundData["NNBestpipi Prediction"],SignalData["NNBestpipi Prediction"]],
+    label = ["b","s"], 
+    bins  = 50, 
+    histtype = "step")
+
+    plt.legend()
+    plt.show()
+
+###
+
+best modelParams
+
+    hiddenLayers    =  [Dense(len(inputVariables),    input_shape = (len(inputVariables),),    activation="relu", kernel_initializer="random_normal"),
+                        Dropout(0.2),
+                        Dense(len(inputVariables)*12, input_shape = (len(inputVariables),),    activation="relu", kernel_initializer="random_normal"),
+                        Dropout(0.2),
+                        Dense(len(inputVariables),    input_shape = (len(inputVariables)*12,), activation="relu", kernel_initializer="random_normal"),
+                        Dropout(0.2),
+                        Dense(1,                      input_shape = (len(inputVariables),),    activation="sigmoid",    kernel_initializer="random_normal")]
+    
+    print("- Neural Network")
+    NN = NeuralNetworkClassifier(hiddenLayers, **GlobalParams)
+    NN.createInFull()
+
+    # print("- Random Forest")
+    # RF = ForestClassifier(RandomForestClassifier(n_estimators=1500, max_depth=6, verbose=1), **GlobalParams)
+    # RF.createInFull()
+    
+    # print("- AdaBoost")
+    # AD = ForestClassifier(AdaBoostClassifier(n_estimators=500, learning_rate=0.1), **GlobalParams)
+    # AD.createInFull()
+
+    # print("- Gradient Boost")
+    # GB = ForestClassifier(GradientBoostingClassifier(n_estimators=800, learning_rate=0.012, max_depth=4, verbose=1), **GlobalParams)
+    # GB.createInFull()
+
+test modelParams
+
+
+    hiddenLayers    =  [Dense(1,                      input_shape = (len(inputVariables),),    activation="sigmoid",    kernel_initializer="random_normal")]
+    
+    print("- Neural Network")
+    NN = NeuralNetworkClassifier(hiddenLayers, **GlobalParams)
+    NN.createInFull()
+
+    # print("- Random Forest")
+    # RF = ForestClassifier(RandomForestClassifier(n_estimators=50, max_depth=3, verbose=1), **GlobalParams)
+    # RF.createInFull()
+    
+    # print("- AdaBoost")
+    # AD = ForestClassifier(AdaBoostClassifier(n_estimators=50, learning_rate=0.1), **GlobalParams)
+    # AD.createInFull()
+
+    # print("- Gradient Boost")
+    # GB = ForestClassifier(GradientBoostingClassifier(n_estimators=50, learning_rate=0.1, max_depth=3, verbose=1), **GlobalParams)
+    # GB.createInFull()
+
+
+def createTestModel(mode = "pipi"):
+    name            = f"test{mode}"
+    inputVariables  = ["nTracks", "B_P", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV","daughter_neutral_PT", "daughter_neutral_IP_OWNPV", "daughterplus_PT","daughterplus_IP_OWNPV"]
+    testData        = pd.read_csv(f"data/{mode}/TestData.csv",  index_col=0)
+    trainData       = pd.read_csv(f"data/{mode}/TrainData.csv", index_col=0)
+
+    hiddenLayers    =  [Dense(len(inputVariables),    input_shape = (len(inputVariables),),    activation="relu",    kernel_initializer="random_normal"),
+                        Dropout(0.0),
+                        Dense(len(inputVariables)*12, input_shape = (len(inputVariables),),    activation="relu",    kernel_initializer="random_normal"),
+                        Dropout(0.0),
+                        Dense(1,                      input_shape = (len(inputVariables)*12,),    activation="sigmoid", kernel_initializer="random_normal")]
+
+    model = NeuralNetworkClassifier(hiddenLayers, name, inputVariables, trainData, testData)
+    model.createInFull()
+
+
+def createFoldedDataModels(nfolds = 5, mode = "pipi"):
+
+    inputVariables  = ["nTracks", "B_P", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV","daughter_neutral_PT", "daughter_neutral_IP_OWNPV", "daughterplus_PT","daughterplus_IP_OWNPV"]
+    FullData        = pd.read_csv(f"data/{mode}/FullData.csv",  index_col=0)
+    FullData        = FullData[inputVariables+["isSignal", "weights"]]
+    FullData        = np.array(FullData)
+    
+    kfold           = KFold(nfolds)
+
+    FoldedTestData  = []
+    FoldedTrainData = []
+
+    for train, test in kfold.split(FullData):
+        FoldedTrainData.append(pd.DataFrame(FullData[train], columns=inputVariables + ["isSignal", "weights"]))
+        FoldedTestData.append( pd.DataFrame(FullData[test],  columns=inputVariables + ["isSignal", "weights"]))
+
+    fold = 0
+    for (trainData, testData) in zip(FoldedTrainData,FoldedTestData):
+        
+        print(trainData)
+
+        fold     += 1
+        name      = f"fold{fold}{mode}"
+
+        GlobalParams    = { "name"           : name,
+                            "inputVariables" : inputVariables,
+                            "testData"       : testData,
+                            "trainData"      : trainData}
+
+        hiddenLayers    =  [BatchNormalization(axis = 1),
+                            Dense(len(inputVariables),    input_shape = (len(inputVariables),),    activation="relu",    kernel_initializer="random_normal"),
+                            Dropout(0.05),
+                            BatchNormalization(axis = 1),
+                            Dense(len(inputVariables)*12, input_shape = (len(inputVariables),),    activation="relu",    kernel_initializer="random_normal"),
+                            Dropout(0.05),
+                            BatchNormalization(axis = 1),
+                            Dense(len(inputVariables),    input_shape = (len(inputVariables)*12,), activation="relu",    kernel_initializer="random_normal"),
+                            Dropout(0.05),
+                            BatchNormalization(axis = 1),
+                            Dense(1,                      input_shape = (len(inputVariables),),    activation="sigmoid", kernel_initializer="random_normal")]
+
+        print(f"\n-- fold {fold} \n")
+        print("- Random Forest")
+        RF = ForestClassifier(RandomForestClassifier(n_estimators=1500, max_depth=6, verbose=1), **GlobalParams)
+        RF.createInFull(path="savedModels/foldedModels")
+        
+        print("- AdaBoost")
+        AD = ForestClassifier(AdaBoostClassifier(n_estimators=500, learning_rate=0.1), **GlobalParams)
+        AD.createInFull(path="savedModels/foldedModels")
+
+        print("- Neural Network")
+        NN = NeuralNetworkClassifier(hiddenLayers, **GlobalParams)
+        NN.createInFull(path="savedModels/foldedModels")
+
+        print("- Gradient Boost")
+        GB = ForestClassifier(GradientBoostingClassifier(n_estimators=800, learning_rate=0.012, max_depth=4, verbose=1), **GlobalParams)
+        GB.createInFull(path="savedModels/foldedModels")
+

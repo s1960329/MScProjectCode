@@ -154,3 +154,10 @@ This week I tested various parametres for the classification models and wrote up
 
 # testRootFile.to_csv(fileNamesCSV["f2v"])
 # trainRootFile.to_csv(fileNamesCSV["f2t"])
+
+
+#todo for today
+
+Draft up background section and include lais's notes
+Draft up introduction section and implement lais's feedback
+Create a draft of a 15 minute talk for monday
