@@ -22,6 +22,7 @@ class BaseClassifier():
         self.inputFeatures  = inputFeatures
         self.inputFullData  = inputFullData
         self.cut            = 0.5
+        self.color          = "**"
 
         self.trainData, self.testData = train_test_split(inputFullData, test_size = 0.1, random_state=23)
     
@@ -118,6 +119,7 @@ class ForestClassifier(BaseClassifier):
         elif type(self.model) == RandomForestClassifier:     self.abbreviation = "RF"
         else :                                               self.abbreviation = "**"
 
+        self.color = modelColors[self.abbreviation]
         self.name  = self.abbreviation + self.name
 
     def predict(self, inputData = pd.DataFrame()):
@@ -153,6 +155,7 @@ class NeuralNetworkClassifier(BaseClassifier):
         super().__init__(name, inputFeatures, inputFullData)
 
         self.abbreviation   = "NN"
+        self.color = modelColors[self.abbreviation]
         self.name           = self.abbreviation + self.name
         self.epochs         = 100
         self.batchSize      = 32

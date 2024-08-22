@@ -8,14 +8,23 @@ dataPath         = "/Users/finnjohnonori/Documents/GitHubRepositories/MScProject
 imagePath        = "/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/imgs"
 modelPath        = "/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/savedModels"
 
+featureUnits     = ["", "MeV/c","MeV/c", "", "", "", "", "mm", "MeV/c", "μm", "MeV/c", "μm", "MeV/c", "μm"]
+
 sharedFeatures   = ["nTracks", "B_P", "gamma_PT", "B_Cone3_B_ptasy", "B_ETA", "B_MINIPCHI2", "B_SmallestDeltaChi2OneTrack", "B_FD_OWNPV", "piminus_PT", "piminus_IP_OWNPV"]
 
-histStyle         = {"bins"     : 50, 
+histStyle        = {"bins"     : 50, 
                      "density"  : True,
                      "alpha"    : 0.8, 
                      "histtype" : "step"}
 
-colors            = {"red"      : "#d80645", 
+modelColors      = {"RF" : "#499127",
+                    "AD" : "#bf1d1d",
+                    "GB" : "#e8a60c",
+                    "NN" : "#07428a",
+                    "BK" : "#000000",
+                    "**" : "#fa509f"}
+
+colors           = {"red"      : "#d80645", 
                      "blue"     : "#006cd4",  
                      "green"    : "#2bad6a",
                      "yellow"   : "#ffd080",
@@ -23,13 +32,13 @@ colors            = {"red"      : "#d80645",
                      "orange"   : "#ff9d0a",
                      "black"    : "#000000"}
 
-fileNamesRoot     = {"kpi"      : f"{dataPath}/dataROOT/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel.root",
+fileNamesRoot    = {"kpi"      : f"{dataPath}/dataROOT/kpiG_MC_Bd2KstGamma_HighPt_prefilter_2018_noPIDsel.root",
                      "kpisb"    : f"{dataPath}/dataROOT/kpiG_sideband_2018.root",
                      "pipi"     : f"{dataPath}/dataROOT/pipiG_MC_Bd2RhoGamma_HighPt_prefilter_2018_noPIDsel.root",
                      "pipisb"   : f"{dataPath}/dataROOT/pipiG_sideband_2018_rhoMass.root",
                      "sm"       : f"{dataPath}/dataROOT/Sample_Kpigamma_2018_selectedTree_with_sWeights_Analysis_2hg_Unbinned-Mask1.root"}
 
-fileNamesCSV      = {"kpi"      : f"{dataPath}/dataCSV/kpi_montecarlo_reweighted.csv",
+fileNamesCSV     = {"kpi"      : f"{dataPath}/dataCSV/kpi_montecarlo_reweighted.csv",
                      "pipi"     : f"{dataPath}/dataCSV/pipi_montecarlo_reweighted.csv",
                      "kpisb"    : f"{dataPath}/dataCSV/kpi_sideband.csv",
                      "sm"       : f"{dataPath}/dataCSV/kpi_sample.csv",
@@ -40,18 +49,15 @@ fileNamesCSV      = {"kpi"      : f"{dataPath}/dataCSV/kpi_montecarlo_reweighted
                      "f2v"      : f"{dataPath}/dataCSV/kpi_BDT_2018_fold2_test.csv",
                      "f2t"      : f"{dataPath}/dataCSV/kpi_BDT_2018_fold2_train.csv"}
 
-uniqueFeatures   = {"kpi"       : ["Kst_892_0_PT",        "Kst_892_0_IP_OWNPV",        "Kplus_PT",       "Kplus_IP_OWNPV" ],
+uniqueFeatures   = {"kpi"      : ["Kst_892_0_PT",        "Kst_892_0_IP_OWNPV",        "Kplus_PT",       "Kplus_IP_OWNPV" ],
                      "pipi"     : ["rho_770_0_PT",        "rho_770_0_IP_OWNPV",        "piplus_PT",      "piplus_IP_OWNPV"],
                      "any"      : ["daughter_neutral_PT", "daughter_neutral_IP_OWNPV", "daughterplus_PT","daughterplus_IP_OWNPV"]}
 
-allFeatures     = {"kpi"        : sharedFeatures + uniqueFeatures["kpi"],
+allFeatures      = {"kpi"      : sharedFeatures + uniqueFeatures["kpi"],
                      "pipi"     : sharedFeatures + uniqueFeatures["pipi"],
                      "any"      : sharedFeatures + uniqueFeatures["any"]}
 
-featureUnits     = ["", "MeV/c","MeV/c", "", "", "", "", "mm", "MeV/c", "μm", "MeV/c", "μm", "MeV/c", "μm"]
-
 unitsDictionary = dict(zip(allFeatures["any"], featureUnits))
-
 
 
 def readRootFile(rootFilePath, features):
@@ -62,11 +68,13 @@ def readRootFile(rootFilePath, features):
     rootFile = rootFile.reset_index(drop=True)
     return rootFile
 
+
 def rootToCSV(rootPath=fileNamesRoot["kpi"], csvPath=fileNamesCSV["kpi"], variables=allFeatures["kpi"] + ["NB0_Kpigamma_sw"]):
     
     LoadedData = readRootFile(rootPath, variables)
     LoadedData.to_csv(csvPath)
     print(f"Data saved to csv file {csvPath}")
+
 
 def roundUp(data, cutOff=0.5):
 
@@ -79,14 +87,12 @@ def roundUp(data, cutOff=0.5):
 
     return np.array(predictions)
 
+
 def NNSummaryToSring(NNmodel):
     stringlist = []
     NNmodel.summary(print_fn=lambda x: stringlist.append(x))
     modelSummary = "\n".join(stringlist)
     return modelSummary
-
-
-
 
 
 if __name__ == "__main__":

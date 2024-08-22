@@ -1,0 +1,16 @@
+
+Test Data Log Loss  : 0.25773606721814235
+Test Data Score     : 0.9423439966094077
+Test Confusion Matrix
+[[ 2044  1295]
+ [  456 12715]]
+
+Train Data Log Loss : 0.2539632384697076
+Train Data Score    : 0.9428686733414255
+Train Confusion Matrix
+[[ 18205  11431]
+ [  4113 114840]]
+
+Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
+
+RandomForestClassifier(max_depth=5, n_estimators=500, verbose=1)

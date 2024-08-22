@@ -1,6 +1,8 @@
 from   classifiers       import *
 import matplotlib.pyplot as plt
 
+from misc import *
+
 
 histStyle         = {"bins"     : 50, 
                      "alpha"    : 0.8,
@@ -81,6 +83,29 @@ def createTestClassifiers(name = "Test", mode = "pipi"):
     return [RF,AD,GB,NN]
 
 
+def createVariableClassifiers(name, mode, modelDict):
+
+    GlobalParams  = initCreateClassifiers(name, mode)
+ 
+    print("- Neural Network")
+    NN = NeuralNetworkClassifier(modelDict["NN"], **GlobalParams)
+    NN.createInFull()
+
+    print("- Random Forest")
+    RF = ForestClassifier(modelDict["RF"], **GlobalParams)
+    RF.createInFull()
+    
+    print("- AdaBoost")
+    AD = ForestClassifier(modelDict["AD"], **GlobalParams)
+    AD.createInFull()
+
+    print("- Gradient Boost")
+    GB = ForestClassifier(modelDict["GB"], **GlobalParams)
+    GB.createInFull()
+
+    return [RF,AD,GB,NN]
+
+
 def loadModels(name = "Bestpipi"):
     RF = joblib.load(f"savedModels/{name}/RF{name}.joblib")
     AD = joblib.load(f"savedModels/{name}/AD{name}.joblib")
@@ -101,7 +126,7 @@ def plotROCcurves(models):
     for model in models:
         Y_test_prediction = model.predict()
         falsePositiveRate, truePositiveRate, threshold = roc_curve(y_true=model.Y_test, y_score=Y_test_prediction)
-        plt.plot(falsePositiveRate, truePositiveRate, label=f"{model.abbreviation}")
+        plt.plot(falsePositiveRate, truePositiveRate, color=model.color, label=f"{model.abbreviation}")
     
     plt.legend()
     
@@ -125,7 +150,7 @@ def plotSeperatedPredictions(model, bestCut=None):
     plt.hist( [signalPredictions, backgroundPredictions],
     weights = [signalweights,     backgroundweights],
     label   = ["Signal",          "Background"],
-    color   = ["#006cd4",         "#d80645"], 
+    color   = [model.color,       modelColors["BK"]], 
     **histStyle)
 
     plt.title(f"{model.name} Prediction Distribution")
@@ -133,7 +158,7 @@ def plotSeperatedPredictions(model, bestCut=None):
     plt.ylabel("Distribution")
 
     if bestCut is not None:
-        plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Cut: {bestCut}", alpha=0.2)
+        plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Cut: {bestCut}", alpha=0.5)
     
     plt.legend()
     plt.grid(linestyle="--", alpha=0.3)
@@ -172,9 +197,9 @@ def plotEfficiencies(model, inputData):
     plt.xlabel("Probability")
     plt.ylabel("Efficiency")
 
-    plt.plot(cuts, sigEff,     label="Signal",     color = "#006cd4", alpha = 0.8)
-    plt.plot(cuts, bacEff,     label="Background", color = "#d80645", alpha = 0.8)
-    plt.axvline(x = bestCut, c ="black", linestyle=":", label=f"Cut: {bestCut}", alpha=0.2)
+    plt.plot(cuts, sigEff,     label="Signal",     color = model.color, alpha = 0.8)
+    plt.plot(cuts, bacEff,     label="Background", color = modelColors["BK"], alpha = 0.8)
+    plt.axvline(x = bestCut, c ="black", linestyle=":", label=f"Cut: {np.round(bestCut,3)}", alpha=0.2)
     plt.legend()
 
     path = f"/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/imgs/efficiencies/{model.name[2:]}/"
@@ -232,7 +257,7 @@ def plotFigureOfMerit(model, inputData):
 
     (bestCut, FoM) = getFoMandBestCut(cuts, model, inputData)
 
-    plt.plot(cuts, FoM, c = colors["red"], label="Figure of Merit")
+    plt.plot(cuts, FoM, c = model.color, label="Figure of Merit")
     plt.grid(linestyle="--", alpha=0.3)
     plt.title(f"{model.name} Figure of Merit")
     plt.xlabel("Cut")
@@ -242,7 +267,7 @@ def plotFigureOfMerit(model, inputData):
     bestCut = FoMDict[max(FoM)]
     
     print("Best Cut: ", bestCut)
-    plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Cut: {bestCut}", alpha=0.2)
+    plt.axvline(x = bestCut, c = colors["black"], linestyle=":", label=f"Cut: {np.round(bestCut,3)}", alpha=0.5)
     plt.legend()
 
     path = f"/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/imgs/figuresOfMerit/{model.name[2:]}/"
@@ -260,11 +285,52 @@ def getConfusionMatrix(model, probcut):
     prediction = roundUp(model.predict(), probcut)
     return confusion_matrix(y_pred=prediction, y_true=truth)
 
+
+def createBackgroundRemovalDistribution(model, feature, decayMode = "pipi"):
+
+    histStyle =     {"bins"     : 50, 
+                     "alpha"    : 0.8,
+                     "density"  : True, 
+                     "histtype" : "step"}
+
+    SampleData     = pd.read_csv(f"/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/data/{decayMode}/SampleDataTest.csv",  index_col=0)
+    kpiDict        = dict(zip(uniqueFeatures["kpi" ], uniqueFeatures["any"]))
+    SampleData     = SampleData.rename(columns = kpiDict)
+
+    SampleData["predictions"] = roundUp(model.predict(SampleData))
+    SampleDataSansBackground  = SampleData[SampleData["predictions"] == 1.0]
+
+    mean = np.mean(SampleData[feature])
+    std  = np.std(SampleData[feature])
+
+    minRange = min(SampleData[feature])
+    maxRange = min(max(SampleData[feature]), mean + 3*std) 
+
+    plt.hist( [SampleData[feature],SampleDataSansBackground[feature],SampleData[feature]],
+    color =   [colors["black"], model.color, modelColors["**"]],
+    label =   ["Raw", model.abbreviation,"Sweights"],
+    weights = [np.ones(len(SampleData)), np.ones(len(SampleDataSansBackground)), SampleData["weights"]],
+    range =   [minRange,maxRange],
+    **histStyle
+    )
+
+    plt.title(f"{model.name} Feature Distributions")
+    plt.xlabel(feature + " " + unitsDictionary[feature])
+    plt.ylabel("Normalised Distribution")
+    plt.grid(axis="both", linestyle="dashed", alpha=0.3)
+    plt.legend()
+    path = f"/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/imgs/RemovalDistributions/{model.name}/"
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    plt.savefig(path+feature, dpi=227)
+    plt.close()
+
 if __name__ == "__main__":
-    createBestClassifiers(name="Best", mode="pipi")
-    createBestClassifiers(name="Best", mode="kpi")
-    createTestClassifiers(name="Test", mode="pipi")
-    createTestClassifiers(name="Test", mode="kpi")
+
+    [RF,AD,GB,NN] = loadModels(name="Bestkpi")
+    for feature in allFeatures["any"] : createBackgroundRemovalDistribution(GB, feature)
+
+
 
 
     

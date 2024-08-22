@@ -1,0 +1,16 @@
+
+Test Data Log Loss  : 0.6235618419697572
+Test Data Score     : 0.9687161035195515
+Test Confusion Matrix
+[[1630   81]
+ [ 145  743]]
+
+Train Data Log Loss : 0.6245547844584777
+Train Data Score    : 0.9682252034291657
+Train Confusion Matrix
+[[14427   755]
+ [ 1463  6742]]
+
+Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
+
+AdaBoostClassifier(learning_rate=0.01, n_estimators=2000)

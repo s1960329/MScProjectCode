@@ -1,0 +1,26 @@
+
+Test Data Log Loss  : 0.2627817667101439
+Test Data Score     : 0.9295250480127087
+Test Confusion Matrix
+[[ 2210  1129]
+ [  675 12496]]
+
+Train Data Log Loss : 0.2608171481999528
+Train Data Score    : 0.9284223139222696
+Train Confusion Matrix
+[[ 19561  10075]
+ [  6251 112702]]
+
+Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
+
+Model: "sequential_4"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense_10 (Dense)                     │ (None, 1)                   │              14 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 44 (180.00 B)
+ Trainable params: 14 (56.00 B)
+ Non-trainable params: 0 (0.00 B)
+ Optimizer params: 30 (124.00 B)
+
