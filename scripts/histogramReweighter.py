@@ -10,7 +10,10 @@ from misc   import readRootFile, rootToCSV
 
 class GBReweight():
 
-    def __init__(self, monteCarloRootFile, sampleRootFile, n_estimators=40, learning_rate=0.2, max_depth=3, min_samples_leaf=200, subsample=0.4, trainingFeatures=sharedFeatures[:5], decayMode = "kpi"):
+    def __call__(self):
+        return f"(n_estimators = {self.n_estimators}, learning_rate = {self.learning_rate}, max_depth = {self.max_depth}, min_samples_leaf = {self.min_samples_leaf}, subsample = {self.subsample}, trainingFeatures = {self.trainingFeatures}, decayMode = {self.decayMode})"  
+        
+    def __init__(self, monteCarloRootFile, sampleRootFile, n_estimators=320, learning_rate=0.025, max_depth=6,  min_samples_leaf=1000, subsample=0.4, trainingFeatures=sharedFeatures[:5] + [allFeatures["any"][8], allFeatures["any"][10]], decayMode = "kpi"):
         
         self.n_estimators        = n_estimators
         self.learning_rate       = learning_rate
@@ -22,7 +25,7 @@ class GBReweight():
         self.sampleRootFile      = sampleRootFile
 
         self.decayMode           = decayMode
-        self.trainingFeatures    = trainingFeatures + [allFeatures[decayMode][10]]
+        self.trainingFeatures    = trainingFeatures 
         self.readData()
 
     def readData(self):
@@ -41,10 +44,9 @@ class GBReweight():
 
         print("Sample and Monte Carlo Data has been loaded...")
 
-    def trainReweighter(self):  
-        sampleTrainingFeatures = sharedFeatures[:5] + [allFeatures["any"][10]]
+    def trainReweighter(self):
         self.reweighter = reweight.GBReweighter(n_estimators=self.n_estimators, learning_rate=self.learning_rate, max_depth=self.max_depth, min_samples_leaf=self.min_samples_leaf, gb_args={'subsample': self.subsample})
-        self.reweighter.fit(self.monteCarloData[self.trainingFeatures], self.sampleData[sampleTrainingFeatures], original_weight=self.monteCarloWeights, target_weight=self.sampleWeights)
+        self.reweighter.fit(self.monteCarloData[self.trainingFeatures], self.sampleData[self.trainingFeatures], original_weight=self.monteCarloWeights, target_weight=self.sampleWeights)
         print("Histogram reweighter has been trained...")
 
     def computeWeights(self):

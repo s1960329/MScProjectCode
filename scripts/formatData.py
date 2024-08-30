@@ -7,7 +7,6 @@ def combineSignalAndBackground(mode = "pipi"):
     SignalData = pd.read_csv(f"data/{mode}/SignalData.csv",     index_col = 0)
 
     VarDict    = dict(zip(uniqueFeatures[mode],uniqueFeatures["any"]))
-
     BackgrData = BackgrData.rename(columns = VarDict)
     SignalData = SignalData.rename(columns = VarDict)
 

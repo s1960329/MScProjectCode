@@ -1,16 +1,17 @@
 
-Test Data Log Loss  : 0.20381723067652846
-Test Data Score     : 0.9545758592632667
+Test Data Log Loss  : 0.21306649259978852
+Test Data Score     : 0.9523452301563381
 Test Confusion Matrix
-[[ 2262   950]
- [  354 12944]]
+[[ 2020  1273]
+ [  322 12895]]
 
-Train Data Log Loss : 0.20319926572800723
-Train Data Score    : 0.9571123555456056
+Train Data Log Loss : 0.2087763837792552
+Train Data Score    : 0.9521378337598843
 Train Confusion Matrix
-[[ 20568   9195]
- [  2993 115833]]
+[[ 18000  11682]
+ [  2838 116069]]
 
+Cut                 : 0.348
 Input Variables     : ['nTracks', 'B_P', 'B_Cone3_B_ptasy', 'B_ETA', 'B_MINIPCHI2', 'B_SmallestDeltaChi2OneTrack', 'B_FD_OWNPV', 'piminus_PT', 'piminus_IP_OWNPV', 'daughter_neutral_PT', 'daughter_neutral_IP_OWNPV', 'daughterplus_PT', 'daughterplus_IP_OWNPV']
 
 Model: "sequential_2"

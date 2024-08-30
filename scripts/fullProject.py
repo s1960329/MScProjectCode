@@ -1,9 +1,8 @@
-from histogramReweighter import *
-from formatData          import *
-from evaluateReweighter  import *
-from classifierAnalysis  import *
-from misc                import *
-
+from histogramReweighter     import *
+from formatData              import *
+from evaluateReweighter      import *
+from classifierAnalysis      import *
+from misc                    import *
 
 def bestClassifiersOnly():
     ModelsBestpipi = loadModels(name="Bestpipi")
@@ -14,76 +13,6 @@ def bestClassifiersOnly():
         plotSeperatedPredictions(model)
         plotEfficiencies(model,  inputData=pipiTestData)
         plotFigureOfMerit(model, inputData=pipiTestData)
-
-
-def fullProject():
-
-    print(" --- Reweighting Data")
-    createSampleData()
-    createAllSignals()
-    createAllBackground()
-
-    print(" --- Plotting Reweighted Histograms")
-    for feature in allFeatures["any"] : createReweightedHistogram(feature, decayMode="pipi")
-    for feature in allFeatures["any"] : createReweightedHistogram(feature, decayMode="kpi")
-    
-    print(" --- Evaluating Reweighter")
-    evaluateReweighter()
-
-    print(" --- Formatting Data")
-    combineSignalAndBackground(mode = "kpi")
-    combineSignalAndBackground(mode = "pipi")
-
-    createTestAndTrainData(mode = "kpi")
-    createTestAndTrainData(mode = "pipi")
-
-    createEvenTestAndTrainData(mode = "kpi")
-    createEvenTestAndTrainData(mode = "pipi")
-
-    createAllStandardDistributions()
-
-    pipiTestData = pd.read_csv("/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/data/kpi/TestData.csv",  index_col=0)
-    kpiTestData  = pd.read_csv("/Users/finnjohnonori/Documents/GitHubRepositories/MScProject/MScProjectCode/data/pipi/TestData.csv", index_col=0)
-
-    print(" --- Creating Classifiers")
-    createBestClassifiers(name="Best", mode="pipi")
-    createTestClassifiers(name="Test", mode="pipi")
-    createBestClassifiers(name="Best", mode="kpi")
-    createTestClassifiers(name="Test", mode="kpi")
-
-    [RF,AD,GB,NN] = loadModels(name="Bestpipi")
-    for feature in allFeatures["any"] : createBackgroundRemovalDistribution(GB, feature)
-
-    print(" --- Load Models")
-    ModelsBestpipi = loadModels(name="Bestpipi")
-    ModelsTestpipi = loadModels(name="Testpipi")
-    ModelsBestkpi  = loadModels(name="Bestkpi")
-    ModelsTestkpi  = loadModels(name="Testkpi")
-
-    print(" --- Creating Prediction Distributions")
-    for model in ModelsBestpipi : plotSeperatedPredictions(model)
-    for model in ModelsTestpipi : plotSeperatedPredictions(model)
-    for model in ModelsBestkpi  : plotSeperatedPredictions(model)
-    for model in ModelsTestkpi  : plotSeperatedPredictions(model)
-
-    print(" --- Creating Efficiency Curves")
-    for model in ModelsBestpipi : plotEfficiencies(model, inputData=pipiTestData)
-    for model in ModelsTestpipi : plotEfficiencies(model, inputData=pipiTestData)
-    for model in ModelsBestkpi  : plotEfficiencies(model, inputData=kpiTestData)
-    for model in ModelsTestkpi  : plotEfficiencies(model, inputData=kpiTestData)
-
-    print(" --- Creating Figures of Merit")
-    for model in ModelsBestpipi : plotFigureOfMerit(model, inputData=pipiTestData)
-    for model in ModelsTestpipi : plotFigureOfMerit(model, inputData=pipiTestData)
-    for model in ModelsBestkpi  : plotFigureOfMerit(model, inputData=kpiTestData)
-    for model in ModelsTestkpi  : plotFigureOfMerit(model, inputData=kpiTestData)
-
-    print(" --- Creating ROC curves")
-    plotROCcurves(ModelsBestpipi)
-    plotROCcurves(ModelsTestpipi)
-    plotROCcurves(ModelsBestkpi)
-    plotROCcurves(ModelsTestkpi)
-
 
 def TuneModels():
 
@@ -165,17 +94,91 @@ def TuneModels():
 
     modelDicts = [ {"RF" : RF, "AD" : AD, "GB" :GB , "NN" : NN} for RF, AD, GB, NN in zip(RFmodels,ADmodels,GBmodels,NNmodels) ]
 
-    # for name, d in zip(names, modelDicts):
-    #     createVariableClassifiers(name, "pipi", d)
+    for name, d in zip(names, modelDicts):
+        createVariableClassifiers(name, "pipi", d)
 
     for name, d in zip(names, modelDicts):
         createVariableClassifiers(name, "kpi", d)
 
+def fullProject():
+
+    print(" --- Reweighting Data")
+    createSampleData()
+    createAllSignals()
+    createAllBackground()
+
+    print(" --- Plotting Reweighted Histograms")
+    createAllStandardDistributions()
+
+    print(" --- Evaluating Reweighter")
+    # evaluateReweighter(decayMode = "kpi")
+    evaluateReweighter(decayMode = "pipi")
+
+    print(" --- Formatting Data")
+    combineSignalAndBackground(mode = "kpi")
+    combineSignalAndBackground(mode = "pipi")
+
+    createTestAndTrainData(mode = "kpi")
+    createTestAndTrainData(mode = "pipi")
+
+    createEvenTestAndTrainData(mode = "kpi")
+    createEvenTestAndTrainData(mode = "pipi")
+
+    kpiFullData   = pd.read_csv("data/kpi/FullData.csv",  index_col=0)
+    pipiFullData  = pd.read_csv("data/pipi/FullData.csv", index_col=0)
+    _ , pipiTestData = train_test_split(pipiFullData, test_size = 0.1, random_state=23)
+    _ , kpiTestData  = train_test_split(kpiFullData,  test_size = 0.1, random_state=23)
+
+    print(" --- Creating Classifiers")
+    createBestClassifiers(name="Best", mode="pipi")
+    createTestClassifiers(name="Test", mode="pipi")
+    createBestClassifiers(name="Best", mode="kpi")
+    createTestClassifiers(name="Test", mode="kpi")
+
+    print(" --- Load Models")
+    ModelsBestpipi = loadModels(name="Bestpipi")
+    ModelsTestpipi = loadModels(name="Testpipi")
+    ModelsBestkpi  = loadModels(name="Bestkpi")
+    ModelsTestkpi  = loadModels(name="Testkpi")
+
+    print(" --- Creating Prediction Distributions")
+    for model in ModelsBestpipi : plotSeperatedPredictions(model)
+    for model in ModelsTestpipi : plotSeperatedPredictions(model)
+    for model in ModelsBestkpi  : plotSeperatedPredictions(model)
+    for model in ModelsTestkpi  : plotSeperatedPredictions(model)
+
+    print(" --- Creating Efficiency Curves")
+    for model in ModelsBestpipi : plotEfficiencies(model, inputData=pipiTestData)
+    for model in ModelsTestpipi : plotEfficiencies(model, inputData=pipiTestData)
+    for model in ModelsBestkpi  : plotEfficiencies(model, inputData=kpiTestData)
+    for model in ModelsTestkpi  : plotEfficiencies(model, inputData=kpiTestData)
+
+    print(" --- Creating Figures of Merit")
+    for model in ModelsBestpipi : model.cut = plotFigureOfMerit(model, inputData=pipiTestData)
+    for model in ModelsTestpipi : model.cut = plotFigureOfMerit(model, inputData=pipiTestData)
+    for model in ModelsBestkpi  : model.cut = plotFigureOfMerit(model, inputData=kpiTestData)
+    for model in ModelsTestkpi  : model.cut = plotFigureOfMerit(model, inputData=kpiTestData)
+
+    print(" --- Create Removal Distribution")
+    modelMatrixpipi = [ModelsBestpipi,ModelsTestpipi]
+    for modelList in modelMatrixpipi:
+        for model in modelList:
+            for feature in allFeatures["any"] : 
+                createBackgroundRemovalDistribution(model, feature, decayMode="pipi")
+
+    modelMatrixkpi = [ModelsBestkpi,ModelsTestkpi]
+    for modelList in modelMatrixkpi:
+        for model in modelList:
+            for feature in allFeatures["any"] : 
+                createBackgroundRemovalDistribution(model, feature, decayMode="kpi")
+
+    print(" --- Creating ROC curves")
+    plotROCcurves(ModelsBestpipi, modelName="Bestpipi")
+    plotROCcurves(ModelsTestpipi, modelName="Testpipi")
+    plotROCcurves(ModelsBestkpi,  modelName="Bestkpi")
+    plotROCcurves(ModelsTestkpi,  modelName="Testkpi")
+
+    createAllMassDistibutions()
 
 if __name__ == "__main__":
-
-    models = loadModels(name="Bestkpi")
-
-    for model in models :
-        for feature in allFeatures["any"] : 
-            createBackgroundRemovalDistribution(model, feature)
+    createAllStandardDistributions()

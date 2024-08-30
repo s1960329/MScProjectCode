@@ -13,7 +13,11 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint     # type
 from sklearn.ensemble           import GradientBoostingClassifier, AdaBoostClassifier, RandomForestClassifier
 
 
+
 class BaseClassifier():
+    
+    def __call__(self):
+        return self.name
 
     def __init__(self, name, inputFeatures, inputFullData):
         self.abbreviation   = ""
@@ -85,6 +89,7 @@ class BaseClassifier():
             self.summaryString        += f"Input Confusion Matrix\n{self.confusionMatrixInput}\n"
 
         self.summaryString  += f"\n"
+        self.summaryString  += f"Cut                 : {np.round(probCut,3)}\n"
         self.summaryString  += f"Input Variables     : {self.inputFeatures}\n"
     
     def saveModel(self, path="savedModels"):
@@ -98,6 +103,7 @@ class BaseClassifier():
         print("\nTraining...\n")
         self.trainModel()
         print("\nEvaluating...\n")
+        (self.cut, _ ) = getFoMandBestCut(np.linspace(0,1,1001), self, self.testData)
         self.evaluateModel(inputData)
         print("\nSaving...\n")
         self.saveModel(path)
@@ -155,7 +161,7 @@ class NeuralNetworkClassifier(BaseClassifier):
         super().__init__(name, inputFeatures, inputFullData)
 
         self.abbreviation   = "NN"
-        self.color = modelColors[self.abbreviation]
+        self.color          = modelColors[self.abbreviation]
         self.name           = self.abbreviation + self.name
         self.epochs         = 100
         self.batchSize      = 32
@@ -163,28 +169,25 @@ class NeuralNetworkClassifier(BaseClassifier):
         self.normaliser     = StandardScaler()
         self.normaliser.fit(self.inputFullData[inputFeatures], y=None, sample_weight=self.inputFullData["weights"])
 
-        self.X_train = pd.DataFrame(self.normaliser.transform(self.X_train), columns=inputFeatures)
-        self.X_test  = pd.DataFrame(self.normaliser.transform(self.X_test),  columns=inputFeatures)
-
         self.hiddenLayers   = hiddenLayers
         self.model = Sequential(self.hiddenLayers)
         self.model.compile(loss="binary_crossentropy", optimizer="adam", weighted_metrics=["accuracy"])
 
     def predict(self, inputData = pd.DataFrame()):
-
-        if inputData.empty: 
-            inputData = self.X_test
-
-        return self.model.predict(inputData[self.inputFeatures]).flatten()
+        if inputData.empty: inputData = self.X_test
+        return self.model.predict(self.normaliseData(inputData[self.inputFeatures])).flatten()
 
     def trainModel(self):
         EarlyStoppingCallback = EarlyStopping(monitor="val_loss", patience=10)
-        self.history = self.model.fit(self.X_train, self.Y_train, sample_weight=self.W_train, validation_data=(self.X_test, self.Y_test), callbacks=[EarlyStoppingCallback], batch_size=self.batchSize, epochs=self.epochs)
+        self.history = self.model.fit(self.normaliser.transform(self.X_train), self.Y_train, sample_weight=self.W_train, validation_data=(self.normaliser.transform(self.X_test), self.Y_test), callbacks=[EarlyStoppingCallback], batch_size=self.batchSize, epochs=self.epochs)
 
     def normaliseData(self, inputData):
         transData = pd.DataFrame(self.normaliser.transform(inputData[self.inputFeatures]), columns=self.inputFeatures)
-        transData["isSignal"] = inputData["isSignal"]
-        transData["weights"]  = inputData["weights"]
+
+        uniqueFeatures = list(set(inputData.columns) - set(self.inputFeatures))
+        for uniqueFeature in uniqueFeatures:
+            transData[uniqueFeature] = inputData[uniqueFeature]
+
         return transData
 
     def evaluateModel(self, inputData = pd.DataFrame(), probCut=None):
@@ -199,9 +202,10 @@ class NeuralNetworkClassifier(BaseClassifier):
         self.summaryString += f"\n{NNSummaryToSring(self.model)}\n"
    
 
-
 if __name__ == "__main__":
     pass
+
+
 
 
 
